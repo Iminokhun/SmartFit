@@ -1,0 +1,104 @@
+services:
+
+    #PHP Service
+    gym-app:
+        build: ./
+        image: gym/php
+        container_name: gym-app
+        restart: unless-stopped
+        tty: true
+        environment:
+            SERVICE_NAME: app
+            SERVICE_TAGS: dev
+        working_dir: /var/www/default
+        volumes:
+            - ./:/var/www/default
+            - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+        networks:
+            - gym-app-network
+
+    #Postgresql Service
+    
+    gym-db:
+        image: postgres:16.1
+        container_name: gym-db
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "${DB_PORT}:5432"
+        environment:
+            PGPASSWORD: '${DB_PASSWORD}'
+            POSTGRES_DB: '${DB_DATABASE}'
+            POSTGRES_USER: '${DB_USERNAME}'
+            POSTGRES_PASSWORD: '${DB_PASSWORD}'
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+            - ./docker/postgres/shared:/shared
+        networks:
+            - gym-app-network
+
+    #Nginx Service
+    gym-webserver:
+        image: nginx:alpine
+        container_name: gym-webserver
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - ./:/var/www/default
+            - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+            - ./docker/nginx/logs:/var/log/nginx
+        networks:
+            - gym-app-network
+        depends_on:
+            - gym-app
+            - gym-db
+
+    #Node Service
+    gym-node:
+        image: node:20-alpine
+        container_name: gym-node
+        working_dir: /var/www/default
+        volumes:
+            - ./:/var/www/default
+        command: /bin/sh -c "npm install && npm run dev"
+        ports:
+            - "3000:3000"
+        networks:
+            - gym-app-network
+        depends_on:
+            - gym-app
+
+    #Mailhog
+    gym-mailhog:
+        image: mailhog/mailhog:latest
+        container_name: gym-mailhog
+        volumes:
+            - mailhog:/maildir
+        ports:
+            - "1025:1025" #smtp server
+            - "8025:8025" #web ui
+        networks:
+            - gym-app-network
+
+    adminer:
+        image: adminer
+        restart: always
+        ports:
+            - 8080:8080
+        networks:
+            - gym-app-network
+
+
+#Docker Networks
+networks:
+    gym-app-network:
+        driver: bridge
+
+#Volumes
+volumes:
+    pgdata:
+        driver: local
+    mailhog:
