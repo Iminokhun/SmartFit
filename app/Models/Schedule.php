@@ -21,7 +21,7 @@ class Schedule extends Model
         return $this->belongsTo(Activity::class);
     }
 
-    public function trainer()
+    public function staff()
     {
         return $this->belongsTo(Staff::class, 'trainer_id');
     }

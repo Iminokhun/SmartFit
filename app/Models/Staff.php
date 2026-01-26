@@ -8,6 +8,7 @@ class Staff extends Model
 {
     protected $fillable = [
         'user_id',
+        'role_id',
         'full_name',
         'specialization',
         'experience_years',
@@ -40,5 +41,10 @@ class Staff extends Model
     public function expenses()
     {
         return $this->hasMany(Expense::class);
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
     }
 }

@@ -31,6 +31,14 @@ class StaffForm
                             ->minValue(0)
                             ->nullable(),
 
+                        Select::make('role_id')
+                            ->label('Role')
+                            ->relationship('role', 'name')
+                            ->preload()
+                            ->searchable()
+                            ->required(),
+
+
                         TextInput::make('phone')
                             ->tel()
                             ->required(),
@@ -63,6 +71,7 @@ class StaffForm
 
                         TextInput::make('salary')
                             ->numeric()
+                            ->minValue(10)
                             ->required(),
                     ]),
             ]);

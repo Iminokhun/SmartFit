@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\Staff\Tables;
 
+use App\Filament\Resources\Customers\CustomerResource;
+use App\Filament\Resources\Staff\StaffResource;
+use App\Models\Staff;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -15,6 +18,10 @@ class StaffTable
     public static function configure(Table $table): Table
     {
         return $table
+
+            ->recordUrl(
+                fn ($record) => StaffResource::getUrl('view', ['record' => $record])
+            )
             ->columns([
                 TextColumn::make('full_name')
                     ->searchable()
