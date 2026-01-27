@@ -46,7 +46,8 @@ class ScheduleForm
                 TextInput::make('hall')
                     ->required(),
 
-                Select::make('day_of_week')
+                Select::make('days_of_week')
+                    ->label('Days of week')
                     ->options([
                         'monday' => 'Monday',
                         'tuesday' => 'Tuesday',
@@ -54,8 +55,10 @@ class ScheduleForm
                         'thursday' => 'Thursday',
                         'friday' => 'Friday',
                         'saturday' => 'Saturday',
-                        'sunday' => 'Sunday',
                     ])
+                    ->multiple()
+                    ->minItems(1)
+                    ->maxItems(6)
                     ->required(),
 
                 TimePicker::make('start_time')

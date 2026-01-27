@@ -10,10 +10,14 @@ class Schedule extends Model
         'activity_id',
         'trainer_id',
         'hall',
-        'day_of_week',
+        'days_of_week',
         'start_time',
         'end_time',
         'max_participants',
+    ];
+
+    protected $casts = [
+        'days_of_week' => 'array',
     ];
 
     public function activity()

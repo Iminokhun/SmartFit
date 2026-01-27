@@ -24,7 +24,7 @@ class Visit extends Model
         return $this->belongsTo(Schedule::class);
     }
 
-    public function trainer()
+    public function staff()
     {
         return $this->belongsTo(Staff::class, 'trainer_id');
     }
