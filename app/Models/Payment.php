@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentMethod;
 use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
@@ -13,6 +14,10 @@ class Payment extends Model
         'method',
         'status',
         'description',
+    ];
+
+    protected $casts = [
+        'method' => PaymentMethod::class,
     ];
 
     public function customer()
