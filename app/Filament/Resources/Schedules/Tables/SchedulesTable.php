@@ -41,21 +41,21 @@ class SchedulesTable
                     ->label('Participants')
             ])
             ->filters([
-                SelectFilter::make('day')
-                    ->label('Day')
-                    ->options([
-                        'monday' => 'Monday',
-                        'tuesday' => 'Tuesday',
-                        'wednesday' => 'Wednesday',
-                        'thursday' => 'Thursday',
-                        'friday' => 'Friday',
-                        'saturday' => 'Saturday',
-                    ])
-                    ->query(function ($query, $state) {
-                        if (!$state) return;
-
-                        $query->whereJsonContains('days_of_week', $state);
-                    }),
+//                SelectFilter::make('day')
+//                    ->label('Day')
+//                    ->options([
+//                        'monday' => 'Monday',
+//                        'tuesday' => 'Tuesday',
+//                        'wednesday' => 'Wednesday',
+//                        'thursday' => 'Thursday',
+//                        'friday' => 'Friday',
+//                        'saturday' => 'Saturday',
+//                    ])
+//                    ->query(function ($query, $state) {
+//                        if (!$state) return;
+//
+//                        $query->whereJsonContains('days_of_week', $state);
+//                    }),
             ])
             ->recordActions([
                 EditAction::make(),
