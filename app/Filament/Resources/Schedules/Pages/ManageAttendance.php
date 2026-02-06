@@ -14,11 +14,16 @@ class ManageAttendance extends Page
 {
     protected static string $resource = ScheduleResource::class;
 
-    protected  string $view = 'filament.resources.schedules.pages.manage-attendance';
+    protected static string $view = 'filament.resources.schedules.pages.manage-attendance';
 
     public Schedule $record;
 
     public string $date;
+
+    /**
+     * @var array<int, string> Список дат (Y-m-d) для колонок таблицы
+     */
+    public array $dates = [];
 
     /**
      * @var array<int, array<string, mixed>>
@@ -66,14 +71,44 @@ class ManageAttendance extends Page
 
     protected function loadRows(): void
     {
-        $date = Carbon::parse($this->date);
+        $currentDate = Carbon::parse($this->date);
         $schedule = $this->record;
+
+        // Определяем месяц по выбранной дате.
+        $monthStart = $currentDate->copy()->startOfMonth();
+        $monthEnd = $currentDate->copy()->endOfMonth();
+
+        // Определяем дни недели, в которые проходит это занятие.
+        $daysOfWeek = $schedule->days_of_week ?? [];
+        $dayNameToCarbon = [
+            'monday' => Carbon::MONDAY,
+            'tuesday' => Carbon::TUESDAY,
+            'wednesday' => Carbon::WEDNESDAY,
+            'thursday' => Carbon::THURSDAY,
+            'friday' => Carbon::FRIDAY,
+            'saturday' => Carbon::SATURDAY,
+            'sunday' => Carbon::SUNDAY,
+        ];
+
+        // Формируем список дат в выбранном месяце, когда есть это занятие.
+        $dates = [];
+        $cursor = $monthStart->copy();
+        while ($cursor->lte($monthEnd)) {
+            $dayName = strtolower($cursor->englishDayOfWeek);
+            if (in_array($dayName, $daysOfWeek, true)) {
+                $dates[] = $cursor->toDateString();
+            }
+            $cursor->addDay();
+        }
+
+        $this->dates = $dates;
 
         // 1) Найти всех клиентов с активным абонементом на activity этого расписания в выбранную дату.
         $customerIds = CustomerSubscription::query()
             ->where('status', 'active')
-            ->whereDate('start_date', '<=', $date)
-            ->whereDate('end_date', '>=', $date)
+            // Абонемент пересекается с выбранным месяцем.
+            ->whereDate('start_date', '<=', $monthEnd)
+            ->whereDate('end_date', '>=', $monthStart)
             ->whereHas('subscription', function ($q) use ($schedule) {
                 $q->where('activity_id', $schedule->activity_id);
             })
@@ -87,12 +122,15 @@ class ManageAttendance extends Page
             ->get()
             ->keyBy('id');
 
-        // 2) Подтянуть существующие визиты на эту дату.
+        // 2) Подтянуть существующие визиты за весь месяц.
         $visits = Visit::query()
             ->where('schedule_id', $schedule->id)
-            ->whereDate('visited_at', $date)
+            ->whereBetween('visited_at', [
+                $monthStart->copy()->startOfDay(),
+                $monthEnd->copy()->endOfDay(),
+            ])
             ->get()
-            ->keyBy('customer_id');
+            ->groupBy('customer_id');
 
         $rows = [];
 
@@ -103,7 +141,18 @@ class ManageAttendance extends Page
                 continue;
             }
 
-            $visit = $visits->get($customerId);
+            $customerVisits = $visits->get($customerId) ?? collect();
+
+            // Сопоставляем статусы по датам.
+            $statusesByDate = [];
+            foreach ($dates as $dateString) {
+                $visitForDate = $customerVisits
+                    ->first(function (Visit $visit) use ($dateString) {
+                        return Carbon::parse($visit->visited_at)->toDateString() === $dateString;
+                    });
+
+                $statusesByDate[$dateString] = $visitForDate?->status;
+            }
 
             $rows[] = [
                 'customer_id' => $customerId,
@@ -112,7 +161,7 @@ class ManageAttendance extends Page
                     $customer->subscriptions
                         ->firstWhere('status', 'active')
                 )->subscription->name ?? '',
-                'status' => $visit?->status,
+                'statuses' => $statusesByDate,
             ];
         }
 

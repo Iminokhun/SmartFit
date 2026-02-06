@@ -37,11 +37,13 @@
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                             Subscription
                         </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Status
-                        </th>
+                        @foreach ($dates as $date)
+                            <th class="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                {{ \Carbon\Carbon::parse($date)->day }}
+                            </th>
+                        @endforeach
                         <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Actions
+                            Actions (for {{ \Carbon\Carbon::parse($date)->toFormattedDateString() }})
                         </th>
                     </tr>
                 </thead>
@@ -56,26 +58,27 @@
                             <td class="px-4 py-3 text-gray-700">
                                 {{ $row['subscription_name'] ?: '-' }}
                             </td>
-                            <td class="px-4 py-3">
+                            @foreach ($dates as $colDate)
                                 @php
-                                    $status = $row['status'];
+                                    $status = $row['statuses'][$colDate] ?? null;
                                     $colors = [
                                         'visited' => 'bg-green-100 text-green-800',
                                         'missed' => 'bg-red-100 text-red-800',
                                         'cancelled' => 'bg-yellow-100 text-yellow-800',
                                     ];
                                 @endphp
-
-                                @if ($status)
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $colors[$status] ?? 'bg-gray-100 text-gray-800' }}">
-                                        {{ ucfirst($status) }}
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-                                        Not marked
-                                    </span>
-                                @endif
-                            </td>
+                                <td class="px-2 py-3 text-center">
+                                    @if ($status)
+                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium {{ $colors[$status] ?? 'bg-gray-100 text-gray-800' }}">
+                                            {{ ucfirst($status) }}
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center rounded-full bg-gray-50 px-2 py-0.5 text-[10px] font-medium text-gray-400">
+                                            -
+                                        </span>
+                                    @endif
+                                </td>
+                            @endforeach
                             <td class="px-4 py-3 text-right">
                                 <div class="inline-flex gap-1">
                                     <x-filament::button

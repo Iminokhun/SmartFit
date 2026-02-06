@@ -6,6 +6,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -59,6 +60,11 @@ class SchedulesTable
             ])
             ->recordActions([
                 EditAction::make(),
+                Action::make('attendance')
+                    ->label('Attendance')
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->url(fn ($record) => \App\Filament\Resources\Schedules\ScheduleResource::getUrl('attendance', ['record' => $record]))
+                    ->color('success'),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
