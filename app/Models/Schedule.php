@@ -20,6 +20,16 @@ class Schedule extends Model
         'days_of_week' => 'array',
     ];
 
+    public function occurrences()
+    {
+        return $this->hasMany(ScheduleOccurrence::class);
+    }
+
+    public function visits()
+    {
+        return $this->hasMany(Visit::class);
+    }
+
     public function activity()
     {
         return $this->belongsTo(Activity::class);

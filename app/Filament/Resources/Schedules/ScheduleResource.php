@@ -33,7 +33,8 @@ class ScheduleResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            \App\Filament\Resources\Schedules\RelationManagers\OccurrencesRelationManager::class,
+            \App\Filament\Resources\Schedules\RelationManagers\VisitsRelationManager::class,
         ];
     }
 
