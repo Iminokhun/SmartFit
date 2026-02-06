@@ -44,26 +44,39 @@ class ManageAttendance extends Page
         $this->loadRows();
     }
 
-    public function setStatus(int $customerId, string $status): void
+    public function toggleStatus(int $customerId, string $dateString): void
     {
-        $date = Carbon::parse($this->date);
         $schedule = $this->record;
+        $date = Carbon::parse($dateString);
 
         $visit = Visit::where('schedule_id', $schedule->id)
             ->where('customer_id', $customerId)
             ->whereDate('visited_at', $date)
             ->first();
 
-        if (! $visit) {
-            $visit = Visit::create([
+        $currentStatus = $visit?->status;
+
+        $cycle = [
+            null => 'visited',
+            'visited' => 'missed',
+            'missed' => 'cancelled',
+            'cancelled' => null,
+        ];
+
+        $nextStatus = $cycle[$currentStatus] ?? 'visited';
+
+        if ($nextStatus === null && $visit) {
+            $visit->delete();
+        } elseif ($visit) {
+            $visit->update(['status' => $nextStatus]);
+        } else {
+            Visit::create([
                 'customer_id' => $customerId,
                 'schedule_id' => $schedule->id,
                 'visited_at' => $date->setTimeFromTimeString($schedule->start_time),
-                'status' => $status,
+                'status' => $nextStatus,
                 'trainer_id' => $schedule->trainer_id,
             ]);
-        } else {
-            $visit->update(['status' => $status]);
         }
 
         $this->loadRows();

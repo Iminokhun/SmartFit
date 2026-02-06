@@ -27,30 +27,55 @@
             </div>
         </div>
 
+        <div class="flex flex-wrap items-center gap-3 text-xs text-gray-600">
+            <span class="font-medium">Legend:</span>
+            <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 font-medium text-green-800">
+                Visited
+            </span>
+            <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 font-medium text-red-800">
+                Missed
+            </span>
+            <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 font-medium text-yellow-800">
+                Cancelled
+            </span>
+            <span class="inline-flex items-center rounded-full bg-gray-50 px-2.5 py-0.5 font-medium text-gray-500">
+                - No visit
+            </span>
+        </div>
+
         <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
             <table class="min-w-full divide-y divide-gray-200 text-sm">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        <th class="sticky left-0 z-10 bg-gray-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                             Customer
                         </th>
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                             Subscription
                         </th>
-                        @foreach ($dates as $date)
-                            <th class="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                {{ \Carbon\Carbon::parse($date)->day }}
+                        @foreach ($dates as $colDate)
+                            @php
+                                $colCarbon = \Carbon\Carbon::parse($colDate);
+                                $isToday = $colCarbon->isToday();
+                                $isWeekend = $colCarbon->isWeekend();
+                                $baseClasses = 'px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider';
+                                $colorClasses = $isToday
+                                    ? ' bg-blue-100 text-blue-800'
+                                    : ($isWeekend ? ' bg-gray-100 text-gray-600' : ' text-gray-500');
+                            @endphp
+                            <th class="{{ $baseClasses . $colorClasses }}">
+                                <div class="flex flex-col items-center gap-0.5">
+                                    <span>{{ strtoupper($colCarbon->shortEnglishDayName) }}</span>
+                                    <span class="text-sm font-semibold">{{ $colCarbon->day }}</span>
+                                </div>
                             </th>
                         @endforeach
-                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Actions (for {{ \Carbon\Carbon::parse($date)->toFormattedDateString() }})
-                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                     @forelse ($rows as $row)
                         <tr>
-                            <td class="px-4 py-3">
+                            <td class="sticky left-0 z-0 bg-white px-4 py-3">
                                 <div class="font-medium text-gray-900">
                                     {{ $row['customer_name'] }}
                                 </div>
@@ -67,7 +92,10 @@
                                         'cancelled' => 'bg-yellow-100 text-yellow-800',
                                     ];
                                 @endphp
-                                <td class="px-2 py-3 text-center">
+                                <td
+                                    class="px-2 py-3 text-center cursor-pointer hover:bg-gray-50"
+                                    wire:click="toggleStatus({{ $row['customer_id'] }}, '{{ $colDate }}')"
+                                >
                                     @if ($status)
                                         <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium {{ $colors[$status] ?? 'bg-gray-100 text-gray-800' }}">
                                             {{ ucfirst($status) }}
@@ -79,37 +107,10 @@
                                     @endif
                                 </td>
                             @endforeach
-                            <td class="px-4 py-3 text-right">
-                                <div class="inline-flex gap-1">
-                                    <x-filament::button
-                                        size="xs"
-                                        color="success"
-                                        wire:click="setStatus({{ $row['customer_id'] }}, 'visited')"
-                                    >
-                                        Visited
-                                    </x-filament::button>
-
-                                    <x-filament::button
-                                        size="xs"
-                                        color="danger"
-                                        wire:click="setStatus({{ $row['customer_id'] }}, 'missed')"
-                                    >
-                                        Missed
-                                    </x-filament::button>
-
-                                    <x-filament::button
-                                        size="xs"
-                                        color="warning"
-                                        wire:click="setStatus({{ $row['customer_id'] }}, 'cancelled')"
-                                    >
-                                        Cancelled
-                                    </x-filament::button>
-                                </div>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-4 py-6 text-center text-sm text-gray-500">
+                            <td colspan="{{ 2 + count($dates) }}" class="px-4 py-6 text-center text-sm text-gray-500">
                                 No customers with active subscriptions for this schedule on selected date.
                             </td>
                         </tr>
