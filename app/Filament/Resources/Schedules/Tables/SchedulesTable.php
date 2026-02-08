@@ -33,7 +33,10 @@ class SchedulesTable
                     ->badge()
                     ->formatStateUsing(fn ($state) => ucfirst($state)),
 
-                TextColumn::make('hall'),
+                TextColumn::make('hall.name')
+                    ->label('Hall')
+                    ->searchable()
+                    ->sortable(),
 
                 TextColumn::make('start_time'),
                 TextColumn::make('end_time'),

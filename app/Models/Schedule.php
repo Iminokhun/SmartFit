@@ -9,7 +9,7 @@ class Schedule extends Model
     protected $fillable = [
         'activity_id',
         'trainer_id',
-        'hall',
+        'hall_id',
         'days_of_week',
         'start_time',
         'end_time',
@@ -38,5 +38,10 @@ class Schedule extends Model
     public function staff()
     {
         return $this->belongsTo(Staff::class, 'trainer_id');
+    }
+
+    public function hall()
+    {
+        return $this->belongsTo(Hall::class);
     }
 }
