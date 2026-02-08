@@ -12,7 +12,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Сначала создаём новую колонку hall_id (временно nullable)
         Schema::table('schedules', function (Blueprint $table) {
             $table->foreignId('hall_id')
                 ->nullable()
@@ -21,8 +20,6 @@ return new class extends Migration
                 ->nullOnDelete();
         });
 
-        // Переносим данные из hall в hall_id
-        // Создаём Hall записи для каждого уникального значения hall
         $uniqueHalls = \DB::table('schedules')
             ->select('hall')
             ->distinct()
@@ -32,19 +29,16 @@ return new class extends Migration
         foreach ($uniqueHalls as $hallName) {
             $hallId = \DB::table('halls')->insertGetId([
                 'name' => $hallName,
-                'capacity' => null,
                 'description' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            // Обновляем schedules с этим hall именем
             \DB::table('schedules')
                 ->where('hall', $hallName)
                 ->update(['hall_id' => $hallId]);
         }
 
-        // Теперь удаляем старую колонку hall
         Schema::table('schedules', function (Blueprint $table) {
             $table->dropColumn('hall');
         });

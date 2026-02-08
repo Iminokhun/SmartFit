@@ -23,4 +23,9 @@ class ViewStaff extends ViewRecord
             EditAction::make(),
         ];
     }
+
+    public function getTitle(): string
+    {
+        return $this->record->full_name;
+    }
 }

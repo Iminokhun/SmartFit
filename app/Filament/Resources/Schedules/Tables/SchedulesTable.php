@@ -63,7 +63,7 @@ class SchedulesTable
             ])
             ->recordActions([
                 EditAction::make(),
-                Action::make('attendance')
+                \Filament\Actions\Action::make('attendance')
                     ->label('Attendance')
                     ->icon('heroicon-o-clipboard-document-check')
                     ->url(fn ($record) => \App\Filament\Resources\Schedules\ScheduleResource::getUrl('attendance', ['record' => $record]))

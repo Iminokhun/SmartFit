@@ -40,6 +40,7 @@ class StaffInfolist
 
                     TextEntry::make('status')
                         ->badge()
+                        ->size('large')
                         ->colors([
                             'success' => 'active',
                             'warning' => 'vacation',

@@ -23,7 +23,7 @@ class ActivityCategoryResource extends Resource
     protected static ?int $navigationSort = 2;
     protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-tag';
 
-//    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+//
 
     public static function form(Schema $schema): Schema
     {

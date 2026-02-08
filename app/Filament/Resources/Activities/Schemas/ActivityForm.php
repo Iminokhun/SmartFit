@@ -25,7 +25,12 @@ class ActivityForm
                         ->relationship('category', 'name')
                         ->searchable()
                         ->preload()
-                        ->required(),
+                        ->required()
+                        ->createOptionForm([
+                            TextInput::make('name')
+                                ->maxLength(50)
+                                ->required()
+                        ]),
 
                     TextInput::make('icon')
                         ->placeholder('heroicon-o-fire')

@@ -14,7 +14,7 @@ class ManageAttendance extends Page
 {
     protected static string $resource = ScheduleResource::class;
 
-    protected static string $view = 'filament.resources.schedules.pages.manage-attendance';
+    protected  string $view = 'filament.resources.schedules.pages.manage-attendance';
 
     public Schedule $record;
 

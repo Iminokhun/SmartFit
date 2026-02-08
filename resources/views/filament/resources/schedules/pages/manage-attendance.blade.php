@@ -65,7 +65,7 @@
                             @endphp
                             <th class="{{ $baseClasses . $colorClasses }}">
                                 <div class="flex flex-col items-center gap-0.5">
-                                    <span>{{ strtoupper($colCarbon->shortEnglishDayName) }}</span>
+{{--                                    <span>{{ strtoupper($colCarbon->shortEnglishDayName) }}</span>--}}
                                     <span class="text-sm font-semibold">{{ $colCarbon->day }}</span>
                                 </div>
                             </th>

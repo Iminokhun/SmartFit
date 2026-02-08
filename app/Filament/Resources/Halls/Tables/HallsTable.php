@@ -21,7 +21,7 @@ class HallsTable
                     ->searchable(),
 
                 TextColumn::make('schedules_count')
-                    ->label('Schedules')
+                    ->label('Activities')
                     ->counts('schedules')
                     ->sortable(),
 

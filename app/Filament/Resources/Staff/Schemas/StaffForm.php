@@ -36,7 +36,13 @@ class StaffForm
                             ->relationship('role', 'name')
                             ->preload()
                             ->searchable()
-                            ->required(),
+                            ->required()
+                            ->createOptionForm([
+                                    TextInput::make('name')
+                                        ->maxLength(255)
+                                        ->required()
+                            ]
+                            ),
 
 
                         TextInput::make('phone')
