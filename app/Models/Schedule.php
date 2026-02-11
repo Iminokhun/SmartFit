@@ -44,4 +44,11 @@ class Schedule extends Model
     {
         return $this->belongsTo(Hall::class);
     }
+
+    protected function timeRange(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => "{$this->start_time} - {$this->end_time}",
+        );
+    }
 }

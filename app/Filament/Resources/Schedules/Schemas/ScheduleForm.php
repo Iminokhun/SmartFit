@@ -3,11 +3,13 @@
 namespace App\Filament\Resources\Schedules\Schemas;
 
 use App\Rules\HallAvailabilityRule;
+use App\Rules\TrainerShiftAvailabilityRule;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 
@@ -26,6 +28,10 @@ class ScheduleForm
 
                 Select::make('trainer_id')
                     ->label('Trainer')
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->reactive()
                     ->relationship(
                         'staff',
                         'full_name',
@@ -34,10 +40,18 @@ class ScheduleForm
                             fn ($q) => $q->where('name', 'Trainer')
                         )
                     )
-                    ->searchable()
-                    ->preload()
-                    ->required(),
-
+                    ->rules([
+                        fn (Get $get) => new TrainerShiftAvailabilityRule(
+                            trainerId: $get('trainer_id'),
+                            startTime: $get('start_time'),
+                            endTime: $get('end_time'),
+                            daysOfWeek: $get('days_of_week') ?? [],
+                            recordId: $get('id')
+                            ?? (is_object(request()->route('record'))
+                                ? request()->route('record')->id
+                                : request()->route('record')),
+                        ),
+                    ]),
 
                 Select::make('hall_id')
                     ->label('Hall')
@@ -50,7 +64,10 @@ class ScheduleForm
                             startTime: $get('start_time'),
                             endTime: $get('end_time'),
                             daysOfWeek: $get('days_of_week') ?? [],
-                            recordId: $get('id') ?? request()->route('record')
+                            recordId: $get('id')
+                            ?? (is_object(request()->route('record'))
+                                ? request()->route('record')->id
+                                : request()->route('record')),
                         ),
                     ])
                     ->createOptionForm([
@@ -73,23 +90,29 @@ class ScheduleForm
                     ->minItems(1)
                     ->maxItems(6)
                     ->required()
-                    ->live()
-                    ->afterStateUpdated(function (Get $get, $set, $state) {
-                        $get('hall_id');
-                    }),
+                    ->reactive()
+                    ->afterStateUpdated(fn (Get $get, Set $set) =>
+                        $set('hall_id', $get('hall_id'))
+                    )
+                    ->afterStateUpdated(fn (Get $get, \Filament\Schemas\Components\Utilities\Set $set) =>
+                    $set('trainer_id', $get('trainer_id'))
+                    ),
 
                 TimePicker::make('start_time')
                     ->required()
                     ->seconds(false)
-                    ->live()
-                    ->afterStateUpdated(function (Get $get, $set, $state) {
-                        $get('hall_id');
-                    }),
+                    ->reactive()
+                    ->afterStateUpdated(fn (Get $get, Set $set) =>
+                        $set('hall_id', $get('hall_id'))
+                    )
+                    ->afterStateUpdated(fn (Get $get, Set $set) =>
+                    $set('trainer_id', $get('trainer_id'))
+                    ),
 
                 TimePicker::make('end_time')
                     ->required()
                     ->seconds(false)
-                    ->live()
+                    ->reactive()
                     ->rules([
                         fn (Get $get) => function (string $attribute, $value, $fail) use ($get) {
                             if ($get('start_time') && $value <= $get('start_time')) {
@@ -97,9 +120,12 @@ class ScheduleForm
                             }
                         },
                     ])
-                    ->afterStateUpdated(function (Get $get, $set, $state) {
-                        $get('hall_id');
-                    }),
+                    ->afterStateUpdated(fn (Get $get, Set $set) =>
+                        $set('hall_id', $get('hall_id'))
+                    )
+                    ->afterStateUpdated(fn (Get $get, Set $set) =>
+                    $set('trainer_id', $get('trainer_id'))
+                    ),
 
                 TextInput::make('max_participants')
                     ->numeric()

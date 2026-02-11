@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Staff extends Model
 {
@@ -46,5 +47,22 @@ class Staff extends Model
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function shifts()
+    {
+        return $this->hasMany(Shift::class);
+    }
+
+    public function activities()
+    {
+        return $this->hasManyThrough(
+            Activity::class,
+            Schedule::class,
+            'trainer_id',
+            'id',
+            'id',
+            'activity_id'
+        );
     }
 }

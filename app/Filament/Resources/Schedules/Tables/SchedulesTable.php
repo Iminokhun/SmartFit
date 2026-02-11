@@ -45,21 +45,50 @@ class SchedulesTable
                     ->label('Participants')
             ])
             ->filters([
-//                SelectFilter::make('day')
-//                    ->label('Day')
-//                    ->options([
-//                        'monday' => 'Monday',
-//                        'tuesday' => 'Tuesday',
-//                        'wednesday' => 'Wednesday',
-//                        'thursday' => 'Thursday',
-//                        'friday' => 'Friday',
-//                        'saturday' => 'Saturday',
-//                    ])
-//                    ->query(function ($query, $state) {
-//                        if (!$state) return;
-//
-//                        $query->whereJsonContains('days_of_week', $state);
-//                    }),
+                SelectFilter::make('day')
+                    ->label('Day')
+                    ->multiple()
+                    ->options([
+                        'monday' => 'Monday',
+                        'tuesday' => 'Tuesday',
+                        'wednesday' => 'Wednesday',
+                        'thursday' => 'Thursday',
+                        'friday' => 'Friday',
+                        'saturday' => 'Saturday',
+                    ])
+                    ->query(function ($query, array $state) {
+                        $days = $state['values'] ?? [];
+                        if (empty($days)) {
+                            return;
+                        }
+
+                        $query->where(function ($subQuery) use ($days) {
+                            foreach ($days as $day) {
+                                $subQuery->orWhereJsonContains('days_of_week', $day);
+                            }
+                        });
+                    }),
+
+                SelectFilter::make('trainer_id')
+                    ->label('Trainer')
+                    ->relationship('staff', 'full_name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('hall_id')
+                    ->label('Hall')
+                    ->relationship('hall', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('activity_id')
+                    ->label('Activity')
+                    ->relationship('activity', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload(),
             ])
             ->recordActions([
                 EditAction::make(),

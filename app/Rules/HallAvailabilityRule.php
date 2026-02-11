@@ -29,19 +29,16 @@ class HallAvailabilityRule implements ValidationRule
         $newStart = Carbon::parse($this->startTime)->format('H:i:s');
         $newEnd = Carbon::parse($this->endTime)->format('H:i:s');
 
-        // Ищем пересечения
         $conflict = Schedule::query()
             ->where('hall_id', $value)
             ->when($this->recordId, fn ($q) => $q->where('id', '!=', $this->recordId))
             ->get()
             ->first(function ($schedule) use ($newStart, $newEnd) {
-                // Проверяем дни недели
                 $commonDays = array_intersect($this->daysOfWeek, $schedule->days_of_week ?? []);
                 if (empty($commonDays)) {
                     return false;
                 }
 
-                // Проверяем время: (StartA < EndB) AND (EndA > StartB)
                 $schStart = Carbon::parse($schedule->start_time)->format('H:i:s');
                 $schEnd = Carbon::parse($schedule->end_time)->format('H:i:s');
 
