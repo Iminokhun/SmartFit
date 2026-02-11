@@ -48,8 +48,10 @@ class HallAvailabilityRule implements ValidationRule
         if ($conflict) {
             $commonDays = array_intersect($this->daysOfWeek, $conflict->days_of_week ?? []);
             $daysString = implode(', ', array_map('ucfirst', $commonDays));
+            $conflictStart = Carbon::parse($conflict->start_time)->format('H:i');
+            $conflictEnd = Carbon::parse($conflict->end_time)->format('H:i');
 
-            $fail("This hall is already booked on {$daysString} at {$conflict->start_time} - {$conflict->end_time} for '{$conflict->activity->name}'.");
+            $fail("This hall is already booked on {$daysString} at {$conflictStart} - {$conflictEnd} for '{$conflict->activity->name}'.");
         }
     }
 }

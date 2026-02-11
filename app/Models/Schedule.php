@@ -48,7 +48,11 @@ class Schedule extends Model
     protected function timeRange(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
         return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn () => "{$this->start_time} - {$this->end_time}",
+            get: fn () => sprintf(
+                '%s - %s',
+                \Carbon\Carbon::parse($this->start_time)->format('H:i'),
+                \Carbon\Carbon::parse($this->end_time)->format('H:i'),
+            ),
         );
     }
 }

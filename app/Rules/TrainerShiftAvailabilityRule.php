@@ -33,6 +33,8 @@ class TrainerShiftAvailabilityRule implements ValidationRule
 
         $newStart = Carbon::parse($this->startTime)->format('H:i:s');
         $newEnd = Carbon::parse($this->endTime)->format('H:i:s');
+        $newStartDisplay = Carbon::parse($this->startTime)->format('H:i');
+        $newEndDisplay = Carbon::parse($this->endTime)->format('H:i');
 
         $shifts = Shift::query()
             ->where('staff_id', $trainerId)
@@ -50,8 +52,8 @@ class TrainerShiftAvailabilityRule implements ValidationRule
                 continue;
             }
 
-            $shiftStart = Carbon::parse($shift->start_time)->format('H:i:s');
-            $shiftEnd = Carbon::parse($shift->end_time)->format('H:i:s');
+            $shiftStart = Carbon::parse($shift->start_time)->format('H:i');
+            $shiftEnd = Carbon::parse($shift->end_time)->format('H:i');
 
             foreach ($shiftDays as $day) {
                 $availableByDay[$day][] = "{$shiftStart} - {$shiftEnd}";
@@ -95,7 +97,7 @@ class TrainerShiftAvailabilityRule implements ValidationRule
             }
             $detailsString = implode('; ', $details);
 
-            $fail("Trainer shift does not cover {$daysString} at {$newStart} - {$newEnd}.");
+            $fail("Trainer shift does not cover {$daysString} at {$newStartDisplay} - {$newEndDisplay}.");
             return;
         }
 
@@ -120,8 +122,10 @@ class TrainerShiftAvailabilityRule implements ValidationRule
         if ($conflict) {
             $commonDays = array_intersect($this->daysOfWeek, $conflict->days_of_week ?? []);
             $daysString = implode(', ', array_map('ucfirst', $commonDays));
+            $conflictStart = Carbon::parse($conflict->start_time)->format('H:i');
+            $conflictEnd = Carbon::parse($conflict->end_time)->format('H:i');
 
-            $fail("Trainer already scheduled on {$daysString} at {$conflict->start_time} - {$conflict->end_time}.");
+            $fail("Trainer already scheduled on {$daysString} at {$conflictStart} - {$conflictEnd}.");
         }
     }
 

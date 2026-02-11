@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Schedules\Tables;
 
+use Carbon\Carbon;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -38,8 +39,10 @@ class SchedulesTable
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('start_time'),
-                TextColumn::make('end_time'),
+                TextColumn::make('start_time')
+                    ->formatStateUsing(fn ($state) => $state ? Carbon::parse($state)->format('H:i') : null),
+                TextColumn::make('end_time')
+                    ->formatStateUsing(fn ($state) => $state ? Carbon::parse($state)->format('H:i') : null),
 
                 TextColumn::make('max_participants')
                     ->label('Participants')

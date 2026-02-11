@@ -64,6 +64,9 @@ class ManageAttendance extends Page
         ];
 
         $nextStatus = $cycle[$currentStatus] ?? 'visited';
+        $consumingStatuses = ['visited', 'missed'];
+        $wasConsuming = in_array($currentStatus, $consumingStatuses, true);
+        $isConsuming = in_array($nextStatus, $consumingStatuses, true);
 
         if ($nextStatus === null && $visit) {
             $visit->delete();
@@ -79,7 +82,28 @@ class ManageAttendance extends Page
             ]);
         }
 
+        $subscription = $this->resolveActiveSubscription($customerId, $date, $schedule);
+        if ($subscription && $subscription->remaining_visits !== null && $wasConsuming !== $isConsuming) {
+            $delta = $isConsuming ? 1 : -1;
+            $subscription->remaining_visits = max(0, $subscription->remaining_visits - $delta);
+            $subscription->save();
+        }
+
         $this->loadRows();
+    }
+
+    protected function resolveActiveSubscription(int $customerId, Carbon $date, Schedule $schedule): ?CustomerSubscription
+    {
+        return CustomerSubscription::query()
+            ->where('customer_id', $customerId)
+            ->where('status', 'active')
+            ->whereDate('start_date', '<=', $date->toDateString())
+            ->whereDate('end_date', '>=', $date->toDateString())
+            ->whereHas('subscription', function ($q) use ($schedule) {
+                $q->where('activity_id', $schedule->activity_id);
+            })
+            ->orderByDesc('start_date')
+            ->first();
     }
 
     protected function loadRows(): void
@@ -135,6 +159,11 @@ class ManageAttendance extends Page
             ->get()
             ->keyBy('id');
 
+        $customerIds = $customers
+            ->sortBy('full_name')
+            ->keys()
+            ->all();
+
         // 2) Подтянуть существующие визиты за весь месяц.
         $visits = Visit::query()
             ->where('schedule_id', $schedule->id)
@@ -181,4 +210,3 @@ class ManageAttendance extends Page
         $this->rows = $rows;
     }
 }
-

@@ -1,123 +1,96 @@
-@php
-    use Filament\Support\Enums\FontWeight;
-@endphp
-
 <x-filament::page>
-    <div class="space-y-6">
-        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-                <h2 class="text-xl font-semibold">
-                    Attendance for: {{ $record->activity->name ?? 'Schedule #'.$record->id }}
-                </h2>
-                <p class="text-sm text-gray-500">
-                    Trainer: {{ $record->staff->full_name ?? '-' }},
-                    Time: {{ $record->start_time }} - {{ $record->end_time }}
-                </p>
+    <div class="attendance">
+        <x-filament::section
+            :heading="$record->activity->name ?? 'Schedule #' . $record->id"
+        >
+            <x-slot name="afterHeader">
+                <div class="attendance-date">
+                    <span class="attendance-date-label">Date</span>
+                    <x-filament::input.wrapper>
+                        <x-filament::input
+                            type="date"
+                            wire:model.live="date"
+                        />
+                    </x-filament::input.wrapper>
+                </div>
+            </x-slot>
+
+            <div class="attendance-meta">
+                <div>
+                    Time:
+                    {{ \Carbon\Carbon::parse($record->start_time)->format('H:i') }}
+                    -
+                    {{ \Carbon\Carbon::parse($record->end_time)->format('H:i') }}
+                </div>
+                <div>Trainer: {{ $record->staff->full_name ?? '-' }}</div>
             </div>
 
-            <div class="flex items-center gap-3">
-                <label class="text-sm font-medium">
-                    Date:
-                    <input
-                        type="date"
-                        wire:model.live="date"
-                        class="fi-input mt-1 block rounded-lg border-gray-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                    />
-                </label>
+            <div class="attendance-legend">
+                <span class="attendance-legend-label">Legend:</span>
+                <x-filament::badge color="success" size="sm">Visited</x-filament::badge>
+                <x-filament::badge color="danger" size="sm">Missed</x-filament::badge>
+                <x-filament::badge color="warning" size="sm">Cancelled</x-filament::badge>
+                <x-filament::badge color="gray" size="sm">No visit</x-filament::badge>
             </div>
-        </div>
 
-        <div class="flex flex-wrap items-center gap-3 text-xs text-gray-600">
-            <span class="font-medium">Legend:</span>
-            <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 font-medium text-green-800">
-                Visited
-            </span>
-            <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 font-medium text-red-800">
-                Missed
-            </span>
-            <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 font-medium text-yellow-800">
-                Cancelled
-            </span>
-            <span class="inline-flex items-center rounded-full bg-gray-50 px-2.5 py-0.5 font-medium text-gray-500">
-                - No visit
-            </span>
-        </div>
-
-        <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-            <table class="min-w-full divide-y divide-gray-200 text-sm">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="sticky left-0 z-10 bg-gray-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Customer
-                        </th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Subscription
-                        </th>
-                        @foreach ($dates as $colDate)
-                            @php
-                                $colCarbon = \Carbon\Carbon::parse($colDate);
-                                $isToday = $colCarbon->isToday();
-                                $isWeekend = $colCarbon->isWeekend();
-                                $baseClasses = 'px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider';
-                                $colorClasses = $isToday
-                                    ? ' bg-blue-100 text-blue-800'
-                                    : ($isWeekend ? ' bg-gray-100 text-gray-600' : ' text-gray-500');
-                            @endphp
-                            <th class="{{ $baseClasses . $colorClasses }}">
-                                <div class="flex flex-col items-center gap-0.5">
-{{--                                    <span>{{ strtoupper($colCarbon->shortEnglishDayName) }}</span>--}}
-                                    <span class="text-sm font-semibold">{{ $colCarbon->day }}</span>
-                                </div>
-                            </th>
-                        @endforeach
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @forelse ($rows as $row)
+            <div class="attendance-table-wrap">
+                <table class="attendance-table">
+                    <thead>
                         <tr>
-                            <td class="sticky left-0 z-0 bg-white px-4 py-3">
-                                <div class="font-medium text-gray-900">
-                                    {{ $row['customer_name'] }}
-                                </div>
-                            </td>
-                            <td class="px-4 py-3 text-gray-700">
-                                {{ $row['subscription_name'] ?: '-' }}
-                            </td>
+                            <th>Customer</th>
+                            <th>Subscription</th>
                             @foreach ($dates as $colDate)
                                 @php
-                                    $status = $row['statuses'][$colDate] ?? null;
-                                    $colors = [
-                                        'visited' => 'bg-green-100 text-green-800',
-                                        'missed' => 'bg-red-100 text-red-800',
-                                        'cancelled' => 'bg-yellow-100 text-yellow-800',
-                                    ];
+                                    $colCarbon = \Carbon\Carbon::parse($colDate)->locale(app()->getLocale());
                                 @endphp
-                                <td
-                                    class="px-2 py-3 text-center cursor-pointer hover:bg-gray-50"
-                                    wire:click="toggleStatus({{ $row['customer_id'] }}, '{{ $colDate }}')"
-                                >
-                                    @if ($status)
-                                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium {{ $colors[$status] ?? 'bg-gray-100 text-gray-800' }}">
-                                            {{ ucfirst($status) }}
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center rounded-full bg-gray-50 px-2 py-0.5 text-[10px] font-medium text-gray-400">
-                                            -
-                                        </span>
-                                    @endif
-                                </td>
+                                <th class="attendance-date-cell">
+                                    <div class="attendance-day">{{ strtoupper($colCarbon->translatedFormat('D')) }}</div>
+                                    <div class="attendance-day-num">{{ $colCarbon->day }}</div>
+                                </th>
                             @endforeach
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="{{ 2 + count($dates) }}" class="px-4 py-6 text-center text-sm text-gray-500">
-                                No customers with active subscriptions for this schedule on selected date.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        @forelse ($rows as $row)
+                            <tr>
+                                <td class="attendance-col-customer">{{ $row['customer_name'] }}</td>
+                                <td>{{ $row['subscription_name'] ?: '-' }}</td>
+                                @foreach ($dates as $colDate)
+                                    @php
+                                        $status = $row['statuses'][$colDate] ?? null;
+                                        $statusColors = [
+                                            'visited' => 'success',
+                                            'missed' => 'danger',
+                                            'cancelled' => 'warning',
+                                        ];
+                                    @endphp
+                                    <td class="attendance-col-center">
+                                        <button
+                                            type="button"
+                                            class="attendance-status-btn"
+                                            wire:click="toggleStatus({{ $row['customer_id'] }}, '{{ $colDate }}')"
+                                        >
+                                            @if ($status)
+                                                <x-filament::badge :color="$statusColors[$status] ?? 'gray'" size="xs">
+                                                    {{ ucfirst($status) }}
+                                                </x-filament::badge>
+                                            @else
+                                                <x-filament::badge color="gray" size="xs">-</x-filament::badge>
+                                            @endif
+                                        </button>
+                                    </td>
+                                @endforeach
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="{{ 2 + count($dates) }}" class="attendance-empty">
+                                    No customers with active subscriptions for this schedule on selected date.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </x-filament::section>
     </div>
 </x-filament::page>
-
