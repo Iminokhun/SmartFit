@@ -43,6 +43,16 @@ class SubscriptionsTable
                     ->money('UZS')
                     ->sortable(),
 
+                TextColumn::make('final_price')
+                    ->label('Final price')
+                    ->money('UZS')
+                    ->state(function ($record) {
+                        $price = $record->price ?? 0;
+                        $discount = $record->discount ?? 0;
+                        return max(0, $price - ($price * $discount / 100));
+                    })
+                    ->sortable(),
+
                 TextColumn::make('discount')
                     ->suffix('%')
 

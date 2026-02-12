@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources\Schedules\Tables;
 
+use Carbon\Carbon;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -32,10 +34,15 @@ class SchedulesTable
                     ->badge()
                     ->formatStateUsing(fn ($state) => ucfirst($state)),
 
-                TextColumn::make('hall'),
+                TextColumn::make('hall.name')
+                    ->label('Hall')
+                    ->searchable()
+                    ->sortable(),
 
-                TextColumn::make('start_time'),
-                TextColumn::make('end_time'),
+                TextColumn::make('start_time')
+                    ->formatStateUsing(fn ($state) => $state ? Carbon::parse($state)->format('H:i') : null),
+                TextColumn::make('end_time')
+                    ->formatStateUsing(fn ($state) => $state ? Carbon::parse($state)->format('H:i') : null),
 
                 TextColumn::make('max_participants')
                     ->label('Participants')
@@ -43,6 +50,7 @@ class SchedulesTable
             ->filters([
                 SelectFilter::make('day')
                     ->label('Day')
+                    ->multiple()
                     ->options([
                         'monday' => 'Monday',
                         'tuesday' => 'Tuesday',
@@ -51,14 +59,47 @@ class SchedulesTable
                         'friday' => 'Friday',
                         'saturday' => 'Saturday',
                     ])
-                    ->query(function ($query, $state) {
-                        if (!$state) return;
+                    ->query(function ($query, array $state) {
+                        $days = $state['values'] ?? [];
+                        if (empty($days)) {
+                            return;
+                        }
 
-                        $query->whereJsonContains('days_of_week', $state);
+                        $query->where(function ($subQuery) use ($days) {
+                            foreach ($days as $day) {
+                                $subQuery->orWhereJsonContains('days_of_week', $day);
+                            }
+                        });
                     }),
+
+                SelectFilter::make('trainer_id')
+                    ->label('Trainer')
+                    ->relationship('staff', 'full_name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('hall_id')
+                    ->label('Hall')
+                    ->relationship('hall', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('activity_id')
+                    ->label('Activity')
+                    ->relationship('activity', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload(),
             ])
             ->recordActions([
                 EditAction::make(),
+                \Filament\Actions\Action::make('attendance')
+                    ->label('Attendance')
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->url(fn ($record) => \App\Filament\Resources\Schedules\ScheduleResource::getUrl('attendance', ['record' => $record]))
+                    ->color('success'),
                 DeleteAction::make(),
             ])
             ->toolbarActions([

@@ -40,13 +40,14 @@ class StaffTable
                     ->sortable(),
 
                 TextColumn::make('status')
-
-                    ->color([
+                    ->badge()
+                    ->size('large')
+                    ->colors([
                         'success' => 'active',
                         'warning' => 'vacation',
                         'gray'    => 'inactive',
                     ])
-                    ->formatStateUsing(fn ($state) => ucfirst($state))
+                    ->formatStateUsing(fn ($state) => ucfirst($state)),
             ])
             ->filters([
                 //

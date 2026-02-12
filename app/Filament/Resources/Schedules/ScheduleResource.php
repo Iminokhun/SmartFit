@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Schedules;
 
 use App\Filament\Resources\Schedules\Pages\CreateSchedule;
 use App\Filament\Resources\Schedules\Pages\EditSchedule;
+use App\Filament\Resources\Schedules\Pages\ManageAttendance;
 use App\Filament\Resources\Schedules\Pages\ListSchedules;
 use App\Filament\Resources\Schedules\Schemas\ScheduleForm;
 use App\Filament\Resources\Schedules\Tables\SchedulesTable;
@@ -33,7 +34,7 @@ class ScheduleResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+//            \App\Filament\Resources\Schedules\RelationManagers\VisitsRelationManager::class,
         ];
     }
 
@@ -43,6 +44,7 @@ class ScheduleResource extends Resource
             'index' => ListSchedules::route('/'),
             'create' => CreateSchedule::route('/create'),
             'edit' => EditSchedule::route('/{record}/edit'),
+            'attendance' => ManageAttendance::route('/{record}/attendance'),
         ];
     }
 }

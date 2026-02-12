@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\Subscriptions\Schemas;
 
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -49,6 +51,22 @@ class SubscriptionForm
                         ->numeric()
                         ->suffix('%')
                         ->default(0)
+                        ->minValue(0)
+                        ->maxValue(100),
+
+                        Placeholder::make('final_price')
+                            ->label('Final price')
+                            ->content(function (Get $get) {
+                                $price = (float) ($get('price') ?? 0);
+                                $discount = (float) ($get('discount') ?? 0);
+
+                                if ($price <= 0) {
+                                    return '-';
+                                }
+
+                                $final = $price - ($price * $discount / 100);
+                                return number_format($final, 2) . ' UZS';
+                            })
                     ]),
                 Section::make('Activity')
                     ->schema([

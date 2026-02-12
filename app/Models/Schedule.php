@@ -9,7 +9,7 @@ class Schedule extends Model
     protected $fillable = [
         'activity_id',
         'trainer_id',
-        'hall',
+        'hall_id',
         'days_of_week',
         'start_time',
         'end_time',
@@ -20,6 +20,16 @@ class Schedule extends Model
         'days_of_week' => 'array',
     ];
 
+    public function occurrences()
+    {
+        return $this->hasMany(ScheduleOccurrence::class);
+    }
+
+    public function visits()
+    {
+        return $this->hasMany(Visit::class);
+    }
+
     public function activity()
     {
         return $this->belongsTo(Activity::class);
@@ -28,5 +38,21 @@ class Schedule extends Model
     public function staff()
     {
         return $this->belongsTo(Staff::class, 'trainer_id');
+    }
+
+    public function hall()
+    {
+        return $this->belongsTo(Hall::class);
+    }
+
+    protected function timeRange(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn () => sprintf(
+                '%s - %s',
+                \Carbon\Carbon::parse($this->start_time)->format('H:i'),
+                \Carbon\Carbon::parse($this->end_time)->format('H:i'),
+            ),
+        );
     }
 }

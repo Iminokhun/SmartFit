@@ -23,4 +23,10 @@ class ViewActivity extends ViewRecord
             EditAction::make(),
         ];
     }
+
+    public function getTitle(): string
+    {
+        // 'full_name' — это название колонки, где хранится имя в вашей базе
+        return $this->record->name;
+    }
 }
