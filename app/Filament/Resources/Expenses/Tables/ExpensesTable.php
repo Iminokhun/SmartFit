@@ -14,9 +14,9 @@ class ExpensesTable
     {
         return $table
             ->columns([
-                TextColumn::make('category')
-                    ->badge()
-                    ->formatStateUsing(fn ($state) => ucfirst($state)),
+                TextColumn::make('category.name')
+                    ->label('Category')
+                    ->badge(),
 
                 TextColumn::make('amount')
                     ->money('UZS')

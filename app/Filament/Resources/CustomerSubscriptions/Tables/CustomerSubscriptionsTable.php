@@ -52,6 +52,28 @@ class CustomerSubscriptionsTable
                         'cancelled' => 'gray',
                     })
                     ->formatStateUsing(fn ($state) => ucfirst((string) $state))
+                    ->label('Status'),
+
+                TextColumn::make('paid_amount')
+                    ->label('Paid')
+                    ->money('UZS')
+                    ->sortable(),
+
+                TextColumn::make('debt')
+                    ->label('Debt')
+                    ->money('UZS')
+                    ->sortable(),
+
+                TextColumn::make('payment_status')
+                    ->label('Payment')
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'paid' => 'success',
+                        'partial' => 'warning',
+                        'unpaid' => 'gray',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn ($state) => ucfirst((string) $state))
 
             ])
             ->filters([

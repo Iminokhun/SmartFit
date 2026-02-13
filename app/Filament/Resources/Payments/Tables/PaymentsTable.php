@@ -52,6 +52,17 @@ class PaymentsTable
                     ->searchable()
                     ->badge(),
 
+                TextColumn::make('status')
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'paid' => 'success',
+                        'partial' => 'warning',
+                        'pending' => 'gray',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn ($state) => ucfirst((string) $state)),
+
                 TextColumn::make('created_at')
                     ->label('Date')
                     ->dateTime()

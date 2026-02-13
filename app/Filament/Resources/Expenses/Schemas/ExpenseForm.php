@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Expenses\Schemas;
 
+use App\Models\ExpenseCategory;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -15,24 +16,19 @@ class ExpenseForm
     {
         return $schema
             ->components([
-                Select::make('category')
-                ->label('Category')
-                ->options([
-                    'rent' => 'Rent',
-                    'salary' => 'Salary',
-                    'equipment' => 'Equipment',
-                    'marketing' => 'Marketing',
-                    'utilities' => 'Utilities',
-                    'other' => 'Other',
-                ])
-                ->required()
-                ->reactive(),
+                Select::make('category_id')
+                    ->label('Category')
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->required()
+                    ->reactive(),
 
                 TextInput::make('amount')
-                ->label('Amount')
-                ->numeric()
-                ->minValue(0)
-                ->required(),
+                    ->label('Amount')
+                    ->numeric()
+                    ->minValue(0)
+                    ->required(),
 
                 DatePicker::make('expenses_date')
                     ->default(now())
@@ -43,8 +39,26 @@ class ExpenseForm
                     ->searchable()
                     ->preload()
                     ->nullable()
-                    ->required(fn (Get $get) => $get('category') === 'salary')
-                    ->visible(fn (Get $get) => $get('category') === 'salary'),
+                    ->required(function (Get $get) {
+                        $categoryId = $get('category_id');
+                        if (! $categoryId) {
+                            return false;
+                        }
+
+                        return (bool) ExpenseCategory::query()
+                            ->whereKey($categoryId)
+                            ->value('requires_staff');
+                    })
+                    ->visible(function (Get $get) {
+                        $categoryId = $get('category_id');
+                        if (! $categoryId) {
+                            return false;
+                        }
+
+                        return (bool) ExpenseCategory::query()
+                            ->whereKey($categoryId)
+                            ->value('requires_staff');
+                    }),
 
                 Textarea::make('description')
                     ->columnSpanFull(),
