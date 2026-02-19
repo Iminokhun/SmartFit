@@ -19,7 +19,6 @@ class CustomerSubscriptionsTable
     public static function configure(Table $table): Table
     {
         return $table
-
             ->columns([
                 TextColumn::make('customer.full_name')
                     ->label('Customer')
@@ -73,8 +72,7 @@ class CustomerSubscriptionsTable
                         'unpaid' => 'gray',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn ($state) => ucfirst((string) $state))
-
+                    ->formatStateUsing(fn ($state) => ucfirst((string) $state)),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -87,6 +85,15 @@ class CustomerSubscriptionsTable
                         'cancelled' => 'Cancelled',
                     ]),
 
+                SelectFilter::make('payment_status')
+                    ->label('Payment')
+                    ->multiple()
+                    ->options([
+                        'paid' => 'Paid',
+                        'partial' => 'Partial',
+                        'unpaid' => 'Unpaid',
+                    ]),
+
                 SelectFilter::make('activity')
                     ->label('Activity')
                     ->multiple()
@@ -95,6 +102,7 @@ class CustomerSubscriptionsTable
                     ->preload()
                     ->query(function (Builder $query, array $state) {
                         $activityIds = $state['values'] ?? [];
+
                         if (empty($activityIds)) {
                             return;
                         }
@@ -103,6 +111,10 @@ class CustomerSubscriptionsTable
                             $subQuery->whereIn('activity_id', $activityIds);
                         });
                     }),
+
+                Filter::make('debt_open')
+                    ->label('Debt > 0')
+                    ->query(fn (Builder $query): Builder => $query->where('debt', '>', 0)),
 
                 Filter::make('date_range')
                     ->form([
@@ -115,10 +127,12 @@ class CustomerSubscriptionsTable
                         if (empty($data['from']) && empty($data['until'])) {
                             return;
                         }
-                        if (!empty($data['from'])) {
+
+                        if (! empty($data['from'])) {
                             $query->whereDate('start_date', '>=', $data['from']);
                         }
-                        if (!empty($data['until'])) {
+
+                        if (! empty($data['until'])) {
                             $query->whereDate('end_date', '<=', $data['until']);
                         }
                     }),
