@@ -5,6 +5,7 @@
             ['key' => 'newCustomers', 'label' => 'New customers', 'value' => $metrics['newCustomers'], 'type' => 'count'],
             ['key' => 'activeClients', 'label' => 'Active customers', 'value' => $metrics['activeClients'], 'type' => 'count'],
             ['key' => 'debt', 'label' => 'Debt (AR)', 'value' => $metrics['debt'], 'type' => 'money'],
+            ['key' => 'inventoryPurchaseCost', 'label' => 'Inventory purchase cost', 'value' => $metrics['inventoryPurchaseCost'], 'type' => 'money'],
         ];
 
         $formatMoney = fn ($value) => number_format((float) $value, 2, '.', ' ');
@@ -36,6 +37,11 @@
                         'date_range' => ['from' => $fromKey, 'until' => $untilKey],
                     ],
                 ]),
+                'inventoryPurchaseCost' => \App\Filament\Resources\Expenses\ExpenseResource::getUrl('index', [
+                    'tableFilters' => [
+                        'expenses_date' => ['from' => $fromKey, 'until' => $untilKey],
+                    ],
+                ]),
                 default => '#',
             };
         };
@@ -44,7 +50,9 @@
     <div class="overview-layout">
         <div class="overview-kpi-grid">
             @foreach ($cards as $card)
-                @php($delta = $kpiDeltas[$card['key']] ?? ['direction' => 'flat', 'percent' => 0])
+                @php
+                    $delta = $kpiDeltas[$card['key']] ?? ['direction' => 'flat', 'percent' => 0];
+                @endphp
                 <div class="overview-card">
                     <div class="overview-card-head">
                         <div class="overview-card-label">{{ $card['label'] }}</div>
@@ -99,7 +107,7 @@
 
             <div class="overview-panel">
                 <div class="overview-panel-title">Revenue per month</div>
-                @livewire(\App\Filament\Widgets\Analytics\OverviewRevenueExpensesMonthlyChart::class, [
+                @livewire('App\\Filament\\Widgets\\Analytics\\OverviewRevenueExpensesMonthlyChart', [
                     'from' => $from,
                     'until' => $until,
                 ], key('overview-revenue-exp-monthly-' . $fromKey . '-' . $untilKey))
@@ -109,7 +117,7 @@
         <div class="overview-two-grid">
             <div class="overview-panel">
                 <div class="overview-panel-title">Collections per month</div>
-                @livewire(\App\Filament\Widgets\Analytics\OverviewCollectionsMonthlyChart::class, [
+                @livewire('App\\Filament\\Widgets\\Analytics\\OverviewCollectionsMonthlyChart', [
                     'from' => $from,
                     'until' => $until,
                 ], key('overview-collections-monthly-' . $fromKey . '-' . $untilKey))
@@ -117,10 +125,82 @@
 
             <div class="overview-panel">
                 <div class="overview-panel-title">Customer mix (period)</div>
-                @livewire(\App\Filament\Widgets\Analytics\OverviewCustomerMixChart::class, [
+                @livewire('App\\Filament\\Widgets\\Analytics\\OverviewCustomerMixChart', [
                     'from' => $from,
                     'until' => $until,
                 ], key('overview-customer-mix-' . $fromKey . '-' . $untilKey))
+            </div>
+        </div>
+
+        <div class="overview-panel">
+            <div class="overview-card-head">
+                <div class="overview-panel-title">Inventory Snapshot</div>
+                <a href="{{ \App\Filament\Resources\Inventories\InventoryResource::getUrl('index') }}" class="overview-drilldown-link">Open inventory</a>
+            </div>
+            <div class="overview-panel-note">Current stock risks and asset state for the selected period.</div>
+            @php
+                $lowStockCount = (int) ($inventorySnapshot['lowStockCount'] ?? 0);
+                $assetsInRepair = (int) ($inventorySnapshot['assetsInRepair'] ?? 0);
+                $writtenOffAssets = (int) ($inventorySnapshot['writtenOffAssets'] ?? 0);
+                $eventsTotal = (int) ($inventorySnapshot['eventsTotal'] ?? 0);
+                $eventsTransferred = (int) ($inventorySnapshot['eventsTransferred'] ?? 0);
+                $eventsSentToRepair = (int) ($inventorySnapshot['eventsSentToRepair'] ?? 0);
+                $eventsReturnedFromRepair = (int) ($inventorySnapshot['eventsReturnedFromRepair'] ?? 0);
+                $eventsWrittenOff = (int) ($inventorySnapshot['eventsWrittenOff'] ?? 0);
+            @endphp
+
+            <div class="overview-mini-grid">
+                <div class="overview-mini-card">
+                    <div class="overview-status-label">Low stock items (<= 10)</div>
+                    <div class="overview-status-value {{ $lowStockCount > 0 ? 'overview-status-value-danger' : 'overview-status-value-ok' }}">{{ number_format($lowStockCount) }}</div>
+                </div>
+                <div class="overview-mini-card">
+                    <div class="overview-status-label">Assets in repair</div>
+                    <div class="overview-status-value {{ $assetsInRepair > 0 ? 'overview-status-value-warn' : 'overview-status-value-ok' }}">{{ number_format($assetsInRepair) }}</div>
+                </div>
+                <div class="overview-mini-card">
+                    <div class="overview-status-label">Written off assets</div>
+                    <div class="overview-status-value {{ $writtenOffAssets > 0 ? 'overview-status-value-danger' : 'overview-status-value-ok' }}">{{ number_format($writtenOffAssets) }}</div>
+                </div>
+                <div class="overview-mini-card">
+                    <div class="overview-status-label">Asset events (period)</div>
+                    <div class="overview-status-value overview-status-value-neutral">{{ number_format($eventsTotal) }}</div>
+                </div>
+            </div>
+
+            <div class="overview-card-head mt-4">
+                <div class="overview-panel-title">Asset Events Breakdown</div>
+                <a href="{{ \App\Filament\Resources\AssetEvents\AssetEventResource::getUrl('index') }}" class="overview-drilldown-link">Open events</a>
+            </div>
+
+            <div class="overview-mini-grid">
+                <div class="overview-mini-card">
+                    <div class="overview-status-label">Transferred</div>
+                    <div class="overview-status-value overview-status-value-neutral">{{ number_format($eventsTransferred) }}</div>
+                </div>
+                <div class="overview-mini-card">
+                    <div class="overview-status-label">Sent to repair</div>
+                    <div class="overview-status-value {{ $eventsSentToRepair > 0 ? 'overview-status-value-warn' : 'overview-status-value-neutral' }}">{{ number_format($eventsSentToRepair) }}</div>
+                </div>
+                <div class="overview-mini-card">
+                    <div class="overview-status-label">Returned from repair</div>
+                    <div class="overview-status-value overview-status-value-ok">{{ number_format($eventsReturnedFromRepair) }}</div>
+                </div>
+                <div class="overview-mini-card">
+                    <div class="overview-status-label">Written off</div>
+                    <div class="overview-status-value {{ $eventsWrittenOff > 0 ? 'overview-status-value-danger' : 'overview-status-value-neutral' }}">{{ number_format($eventsWrittenOff) }}</div>
+                </div>
+            </div>
+
+            <div class="overview-card-head mt-4">
+                <div class="overview-panel-title">Inventory Expense Mix</div>
+            </div>
+            <div class="overview-panel-note">Distribution of inventory purchase expenses by category (Assets / Consumable / Retail).</div>
+            <div class="analytics-chart-wrap">
+                @livewire('App\\Filament\\Widgets\\Analytics\\OverviewInventoryExpenseCategoryPieChart', [
+                    'from' => $from,
+                    'until' => $until,
+                ], key('overview-inventory-expense-mix-' . $fromKey . '-' . $untilKey))
             </div>
         </div>
     </div>

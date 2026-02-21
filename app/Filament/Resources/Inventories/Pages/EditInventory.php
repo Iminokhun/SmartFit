@@ -16,4 +16,13 @@ class EditInventory extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (auth()->user()?->role === 'manager') {
+            $data['quantity'] = $this->record->quantity;
+        }
+
+        return $data;
+    }
 }

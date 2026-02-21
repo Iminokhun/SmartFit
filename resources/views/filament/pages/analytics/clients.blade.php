@@ -99,7 +99,9 @@
                         <div class="analytics-kpi-label text-xs uppercase tracking-wide text-gray-500">
                             {{ $card['label'] }}
                         </div>
-                        @php($delta = $kpiDeltas[$card['key']] ?? ['direction' => 'flat', 'percent' => 0])
+                        @php
+                            $delta = $kpiDeltas[$card['key']] ?? ['direction' => 'flat', 'percent' => 0];
+                        @endphp
                         <div class="analytics-kpi-delta analytics-kpi-delta--{{ $delta['direction'] }}">
                             @if ($delta['direction'] === 'up')
                                 ▲ +{{ $delta['percent'] }}%
@@ -128,7 +130,7 @@
             </div>
             @if ($hasData)
                 <div class="analytics-chart-wrap">
-                    @livewire(\App\Filament\Widgets\Analytics\ClientsNewActiveChart::class, [
+                    @livewire('App\\Filament\\Widgets\\Analytics\\ClientsNewActiveChart', [
                         'from' => $from,
                         'until' => $until,
                         'activityId' => $activityId,

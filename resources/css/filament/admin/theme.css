@@ -555,6 +555,61 @@
     color: #111827;
 }
 
+.overview-panel-note {
+    margin-top: 0.35rem;
+    margin-bottom: 0.85rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.overview-mini-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+    .overview-mini-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1280px) {
+    .overview-mini-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.overview-mini-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.75rem;
+    background: #fafafa;
+    text-align: left;
+}
+
+.overview-mini-card .overview-status-value {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+    margin-top: 0.15rem;
+}
+
+.overview-status-value-ok {
+    color: #15803d;
+}
+
+.overview-status-value-warn {
+    color: #b45309;
+}
+
+.overview-status-value-danger {
+    color: #b91c1c;
+}
+
+.overview-status-value-neutral {
+    color: #1f2937;
+}
+
 
 .overview-card-head {
     display: flex;

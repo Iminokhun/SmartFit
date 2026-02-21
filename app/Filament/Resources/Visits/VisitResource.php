@@ -40,6 +40,17 @@ class VisitResource extends Resource
         ];
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
+    public static function canViewAny(): bool
+    {
+        return false;
+    }
+
+
     public static function getPages(): array
     {
         return [

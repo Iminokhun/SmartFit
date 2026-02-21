@@ -16,4 +16,9 @@ class Shift extends Model
     protected $casts = [
         'days_of_week' => 'array',
     ];
+
+    public function staff()
+    {
+        return $this->belongsTo(Staff::class);
+    }
 }

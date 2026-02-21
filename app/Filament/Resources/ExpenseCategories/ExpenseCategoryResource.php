@@ -21,7 +21,10 @@ class ExpenseCategoryResource extends Resource
 {
     protected static ?string $model = ExpenseCategory::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;
+    protected static string|null|\UnitEnum $navigationGroup = 'Finance';
+    protected static ?int $navigationSort = 3;
+    protected static ?string $navigationLabel = 'Expense Categories';
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
 
     public static function form(Schema $schema): Schema
     {

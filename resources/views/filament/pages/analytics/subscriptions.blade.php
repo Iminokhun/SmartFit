@@ -113,7 +113,7 @@
         <div class="analytics-charts grid grid-cols-1 gap-6 xl:grid-cols-2">
             <x-filament::section heading="Revenue Trend" class="analytics-panel analytics-chart">
                 <div class="analytics-chart-wrap">
-                    @livewire(\App\Filament\Widgets\Analytics\SubscriptionsRevenueTrendChart::class, [
+                    @livewire('App\\Filament\\Widgets\\Analytics\\SubscriptionsRevenueTrendChart', [
                         'from' => $from,
                         'until' => $until,
                         'activityId' => $activityId,
@@ -125,7 +125,7 @@
 
             <x-filament::section heading="Clients vs Subscriptions" class="analytics-panel analytics-chart">
                 <div class="analytics-chart-wrap">
-                    @livewire(\App\Filament\Widgets\Analytics\SubscriptionsClientsSubscriptionsChart::class, [
+                    @livewire('App\\Filament\\Widgets\\Analytics\\SubscriptionsClientsSubscriptionsChart', [
                         'from' => $from,
                         'until' => $until,
                         'activityId' => $activityId,
@@ -138,7 +138,7 @@
 
         <x-filament::section heading="Top Plans" class="analytics-panel analytics-chart">
             <div class="analytics-chart-wrap">
-                @livewire(\App\Filament\Widgets\Analytics\SubscriptionsTopPlansChart::class, [
+                @livewire('App\\Filament\\Widgets\\Analytics\\SubscriptionsTopPlansChart', [
                     'from' => $from,
                     'until' => $until,
                     'activityId' => $activityId,

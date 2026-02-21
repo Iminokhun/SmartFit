@@ -92,7 +92,9 @@
                 @foreach ($cards as $card)
                     <div class="analytics-kpi-card rounded-xl p-4">
                         <div class="analytics-kpi-label text-xs uppercase tracking-wide text-gray-500">{{ $card['label'] }}</div>
-                        @php($delta = $kpiDeltas[$card['key']] ?? ['direction' => 'flat', 'percent' => 0])
+                        @php
+                            $delta = $kpiDeltas[$card['key']] ?? ['direction' => 'flat', 'percent' => 0];
+                        @endphp
                         <div class="analytics-kpi-delta analytics-kpi-delta--{{ $delta['direction'] }}">
                             @if ($delta['direction'] === 'up')
                                 ▲ +{{ $delta['percent'] }}%
@@ -122,7 +124,7 @@
                         Shows collected revenue and recorded expenses by day in selected period.
                     </div>
                     <div class="analytics-chart-wrap">
-                        @livewire(\App\Filament\Widgets\Analytics\FinanceRevenueExpensesTrendChart::class, [
+                        @livewire('App\\Filament\\Widgets\\Analytics\\FinanceRevenueExpensesTrendChart', [
                             'from' => $from,
                             'until' => $until,
                             'activityId' => $activityId,
@@ -138,7 +140,7 @@
                         Collections are paid/partial payments. Debt is open receivable from active subscriptions.
                     </div>
                     <div class="analytics-chart-wrap">
-                        @livewire(\App\Filament\Widgets\Analytics\FinanceCollectionsDebtTrendChart::class, [
+                        @livewire('App\\Filament\\Widgets\\Analytics\\FinanceCollectionsDebtTrendChart', [
                             'from' => $from,
                             'until' => $until,
                             'activityId' => $activityId,
@@ -155,7 +157,7 @@
                         Share of expenses by category in selected period.
                     </div>
                     <div class="analytics-chart-wrap">
-                        @livewire(\App\Filament\Widgets\Analytics\FinanceExpenseCategoryPieChart::class, [
+                        @livewire('App\\Filament\\Widgets\\Analytics\\FinanceExpenseCategoryPieChart', [
                             'from' => $from,
                             'until' => $until,
                             'expenseCategoryId' => $expenseCategoryId,

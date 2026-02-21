@@ -31,4 +31,9 @@ class Expense extends Model
     {
         return $this->belongsTo(Staff::class);
     }
+
+    public function inventories()
+    {
+        return $this->hasMany(Inventory::class);
+    }
 }

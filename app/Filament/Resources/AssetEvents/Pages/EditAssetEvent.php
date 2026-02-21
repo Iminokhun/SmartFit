@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\InventoryMovements\Pages;
+namespace App\Filament\Resources\AssetEvents\Pages;
 
-use App\Filament\Resources\InventoryMovements\InventoryMovementResource;
+use App\Filament\Resources\AssetEvents\AssetEventResource;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
-class EditInventoryMovement extends EditRecord
+class EditAssetEvent extends EditRecord
 {
-    protected static string $resource = InventoryMovementResource::class;
+    protected static string $resource = AssetEventResource::class;
 
     public function mount(int|string $record): void
     {

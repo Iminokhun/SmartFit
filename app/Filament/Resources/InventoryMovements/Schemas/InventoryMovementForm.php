@@ -2,13 +2,14 @@
 
 namespace App\Filament\Resources\InventoryMovements\Schemas;
 
-use App\Enums\InventoryStatus;
+use App\Enums\InventoryItemType;
 use App\Models\Inventory;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 class InventoryMovementForm
 {
@@ -19,10 +20,12 @@ class InventoryMovementForm
                 Select::make('inventory_id')
                     ->label('Inventory Item')
                     ->relationship(
-                    name: 'inventory',
-                    titleAttribute: 'name')
+                        name: 'inventory',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn (Builder $query) => $query->where('item_type', '!=', InventoryItemType::Asset->value),
+                    )
                     ->getOptionLabelFromRecordUsing(fn ($record) =>
-                    "{$record->name}  -  {$record->status->label()}  -  Qty: {$record->quantity}"
+                        "{$record->name} - {$record->item_type?->label()} - Qty: {$record->quantity}" . ($record->unit ? " {$record->unit}" : '')
                     )
                     ->preload()
                     ->searchable()
@@ -30,11 +33,11 @@ class InventoryMovementForm
                     ->reactive(),
 
                 Select::make('type')
-                ->options([
-                    'in' => 'In (Arrival)',
-                    'out' => 'Out (Write-off)',
-                ])
-                ->required(),
+                    ->options([
+                        'in' => 'In (Arrival)',
+                        'out' => 'Out (Write-off)',
+                    ])
+                    ->required(),
 
                 TextInput::make('quantity')
                     ->numeric()
@@ -49,20 +52,27 @@ class InventoryMovementForm
                                     return;
                                 }
 
+                                if ($inventory->isAsset()) {
+                                    $fail('Stock movement is not allowed for asset items. Use asset status/lifecycle updates instead.');
+
+                                    return;
+                                }
+
                                 if ($get('type') === 'out' && $value > $inventory->quantity) {
                                     $fail("Not enough items in stock. Available: {$inventory->quantity}");
                                 }
                             };
-                        }
+                        },
                     ]),
 
                 Textarea::make('description')
                     ->label('Description / Reason')
                     ->rows(3)
-
                     ->placeholder('Example: Issued to project A, Returned from repair...')
                     ->reactive()
                     ->required(),
             ]);
     }
 }
+
+

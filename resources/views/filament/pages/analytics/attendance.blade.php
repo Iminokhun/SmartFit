@@ -140,7 +140,7 @@
                         Grouped bars make daily visited, missed, and cancelled values easier to compare.
                     </div>
                     <div class="analytics-chart-wrap">
-                        @livewire(\App\Filament\Widgets\Analytics\AttendanceVisitsTrendChart::class, [
+                        @livewire('App\\Filament\\Widgets\\Analytics\\AttendanceVisitsTrendChart', [
                             'from' => $from,
                             'until' => $until,
                             'trainerId' => $trainerId,
@@ -157,7 +157,7 @@
                         Share of visited, missed, and cancelled statuses.
                     </div>
                     <div class="analytics-chart-wrap">
-                        @livewire(\App\Filament\Widgets\Analytics\AttendanceStatusSplitChart::class, [
+                        @livewire('App\\Filament\\Widgets\\Analytics\\AttendanceStatusSplitChart', [
                             'from' => $from,
                             'until' => $until,
                             'trainerId' => $trainerId,
