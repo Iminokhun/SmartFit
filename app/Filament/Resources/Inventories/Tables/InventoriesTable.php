@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Inventories\Tables;
 use App\Enums\InventoryItemType;
 use App\Enums\InventoryStatus;
 use App\Filament\Resources\Expenses\ExpenseResource;
+use App\Models\Inventory;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -149,11 +150,13 @@ class InventoriesTable
                     ->url(fn ($record) => $record->expense_id ? ExpenseResource::getUrl('edit', ['record' => $record->expense_id]) : null)
                     ->openUrlInNewTab()
                     ->visible(fn ($record): bool => ! empty($record->expense_id)),
-                DeleteAction::make(),
+                DeleteAction::make()
+                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->visible(fn () => auth()->user()?->can('deleteAny', Inventory::class)),
                 ]),
             ]);
     }

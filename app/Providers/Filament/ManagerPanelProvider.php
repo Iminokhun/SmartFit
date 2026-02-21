@@ -2,16 +2,17 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Analytics;
-use App\Filament\Pages\Analytics\Attendance;
 use App\Filament\Resources\Activities\ActivityResource;
 use App\Filament\Resources\ActivityCategories\ActivityCategoryResource;
 use App\Filament\Resources\AssetEvents\AssetEventResource;
 use App\Filament\Resources\CustomerSubscriptions\CustomerSubscriptionResource;
 use App\Filament\Resources\Customers\CustomerResource;
+use App\Filament\Resources\ExpenseCategories\ExpenseCategoryResource;
+use App\Filament\Resources\Expenses\ExpenseResource;
 use App\Filament\Resources\Halls\HallResource;
 use App\Filament\Resources\Inventories\InventoryResource;
 use App\Filament\Resources\InventoryMovements\InventoryMovementResource;
+use App\Filament\Resources\Payments\PaymentResource;
 use App\Filament\Resources\Schedules\ScheduleResource;
 use App\Filament\Resources\Shifts\ShiftResource;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
@@ -52,14 +53,14 @@ class ManagerPanelProvider extends PanelProvider
                 SubscriptionResource::class,
                 ActivityResource::class,
                 ActivityCategoryResource::class,
+                PaymentResource::class,
                 InventoryResource::class,
                 InventoryMovementResource::class,
                 AssetEventResource::class,
+                ExpenseResource::class,
             ])
             ->pages([
                 Dashboard::class,
-                Analytics::class,
-                Attendance::class,
             ])
             ->plugins([
                 FilamentApexChartsPlugin::make(),
@@ -82,4 +83,3 @@ class ManagerPanelProvider extends PanelProvider
             ]);
     }
 }
-

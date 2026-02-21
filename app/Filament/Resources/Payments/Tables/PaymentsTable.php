@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Payments\Tables;
 
+use App\Models\Payment;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -101,14 +102,14 @@ class PaymentsTable
             ])
             ->recordActions([
                 EditAction::make()
-                    ->visible(fn () => auth()->user()?->role === 'admin' || auth()->user()?->role === 'manager'),
+                    ->visible(fn ($record) => auth()->user()?->can('update', $record)),
                 DeleteAction::make()
-                    ->visible(fn () => auth()->user()?->role === 'admin' || auth()->user()?->role === 'manager'),
+                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->role === 'admin' || auth()->user()?->role === 'manager'),
+                        ->visible(fn () => auth()->user()?->can('deleteAny', Payment::class)),
                 ]),
             ]);
     }

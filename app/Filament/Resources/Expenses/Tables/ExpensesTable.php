@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Expenses\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
@@ -73,11 +74,16 @@ class ExpensesTable
                     }),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->visible(fn ($record) => auth()->user()?->can('update', $record)),
+                DeleteAction::make()
+                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
+
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\Expense::class)),
                 ]),
             ]);
     }
