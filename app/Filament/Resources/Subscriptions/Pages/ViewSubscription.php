@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Subscriptions\Pages;
 
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
+use App\Models\Payment;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -67,7 +68,7 @@ class ViewSubscription extends ViewRecord
                     ]),
 
                 Section::make('Pricing')
-                    ->columns(3)
+                    ->columns(4)
                     ->schema([
                         TextEntry::make('price')
                             ->label('Price')
@@ -86,6 +87,19 @@ class ViewSubscription extends ViewRecord
                                 $price = $record->price ?? 0;
                                 $discount = $record->discount ?? 0;
                                 return max(0, $price - ($price * $discount / 100));
+                            })
+                            ->weight('bold'),
+
+                        TextEntry::make('total_revenue')
+                            ->label('Total revenue')
+                            ->money('UZS')
+                            ->state(function ($record) {
+                                return Payment::query()
+                                    ->whereIn('status', ['paid', 'partial'])
+                                    ->whereHas('customerSubscription', function ($query) use ($record) {
+                                        $query->where('subscription_id', $record->id);
+                                    })
+                                    ->sum('amount');
                             })
                             ->weight('bold'),
                     ]),
@@ -126,8 +140,27 @@ class ViewSubscription extends ViewRecord
                                 TextEntry::make('remaining_visits')
                                     ->label('Visits left')
                                     ->state(fn ($record) => $record->remaining_visits ?? 'Unlimited'),
+
+                                TextEntry::make('paid_amount')
+                                    ->label('Paid')
+                                    ->money('UZS'),
+
+                                TextEntry::make('debt')
+                                    ->label('Debt')
+                                    ->money('UZS'),
+
+                                TextEntry::make('payment_status')
+                                    ->label('Payment')
+                                    ->badge()
+                                    ->color(fn ($state) => match ($state) {
+                                        'paid' => 'success',
+                                        'partial' => 'warning',
+                                        'unpaid' => 'gray',
+                                        default => 'gray',
+                                    })
+                                    ->formatStateUsing(fn ($state) => ucfirst((string) $state)),
                             ])
-                            ->columns(5)
+                            ->columns(8)
                             ->columnSpanFull(),
                     ])
 

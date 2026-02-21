@@ -6,8 +6,12 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class PaymentsTable
 {
@@ -25,7 +29,7 @@ class PaymentsTable
                     ->sortable(),
 
                 TextColumn::make('amount')
-                    ->money('UZS') //
+                    ->money('UZS')
                     ->sortable()
                     ->badge()
                     ->color(fn ($record) =>
@@ -40,6 +44,7 @@ class PaymentsTable
                     ->badge()
                     ->state(function ($record) {
                         $price = $record->customerSubscription?->subscription?->price ?? 0;
+
                         return max(0, $price - $record->amount);
                     })
                     ->color(fn ($record) =>
@@ -52,15 +57,47 @@ class PaymentsTable
                     ->searchable()
                     ->badge(),
 
+                TextColumn::make('status')
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'paid' => 'success',
+                        'partial' => 'warning',
+                        'pending' => 'gray',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn ($state) => ucfirst((string) $state)),
+
                 TextColumn::make('created_at')
                     ->label('Date')
                     ->dateTime()
                     ->sortable(),
-
-
             ])
             ->filters([
-                //
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'paid' => 'Paid',
+                        'partial' => 'Partial',
+                        'pending' => 'Pending',
+                        'failed' => 'Failed',
+                    ]),
+
+                Filter::make('created_at')
+                    ->label('Date range')
+                    ->form([
+                        DatePicker::make('from')->label('From'),
+                        DatePicker::make('until')->label('Until'),
+                    ])
+                    ->query(function (Builder $query, array $data): void {
+                        if (! empty($data['from'])) {
+                            $query->whereDate('created_at', '>=', $data['from']);
+                        }
+
+                        if (! empty($data['until'])) {
+                            $query->whereDate('created_at', '<=', $data['until']);
+                        }
+                    }),
             ])
             ->recordActions([
                 EditAction::make()
@@ -76,3 +113,4 @@ class PaymentsTable
             ]);
     }
 }
+

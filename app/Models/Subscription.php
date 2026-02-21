@@ -26,4 +26,13 @@ class Subscription extends Model
     {
         return $this->belongsTo(Activity::class);
     }
+
+    public function finalPrice(): float
+    {
+        $price = (float) ($this->price ?? 0);
+        $discount = (float) ($this->discount ?? 0);
+        $final = $price - ($price * $discount / 100);
+
+        return max(0, round($final, 2));
+    }
 }

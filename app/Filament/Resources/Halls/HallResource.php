@@ -18,7 +18,7 @@ class HallResource extends Resource
 {
     protected static ?string $model = Hall::class;
 
-    protected static string|null|\UnitEnum $navigationGroup = 'Schedules';
+    protected static string|null|\UnitEnum $navigationGroup = 'Scheduling';
     protected static ?int $navigationSort = 1;
     protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-building-office';
 

@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\AssetEvent;
+use App\Models\InventoryMovement;
+use App\Models\Payment;
+use App\Observers\AssetEventObserver;
+use App\Observers\InventoryMovementObserver;
+use App\Observers\PaymentObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Payment::observe(PaymentObserver::class);
+        InventoryMovement::observe(InventoryMovementObserver::class);
+        AssetEvent::observe(AssetEventObserver::class);
     }
 }
