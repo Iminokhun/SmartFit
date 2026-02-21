@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Schedules\Tables;
 
+use App\Filament\Resources\Payments\PaymentResource;
+use App\Filament\Resources\Schedules\ScheduleResource;
 use Carbon\Carbon;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -17,6 +19,7 @@ class SchedulesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => ScheduleResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('activity.name')
                     ->label('Activity')

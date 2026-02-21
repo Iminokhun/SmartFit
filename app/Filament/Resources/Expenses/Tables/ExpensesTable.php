@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Expenses\Tables;
 
+use App\Filament\Resources\Expenses\ExpenseResource;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -17,6 +18,7 @@ class ExpensesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => ExpenseResource::getUrl('view', ['record' => $record]))
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('category.name')

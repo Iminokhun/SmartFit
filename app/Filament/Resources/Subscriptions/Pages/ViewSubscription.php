@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\Subscriptions\Pages;
 
+use App\Filament\Resources\InventoryMovements\InventoryMovementResource;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
 use App\Models\Payment;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -26,10 +28,11 @@ class ViewSubscription extends ViewRecord
         return [
             Action::make('back')
                 ->label('Back')
-                ->url(SubscriptionResource::getUrl('index'))
-                ->color('success')
-                ->icon('heroicon-o-home'),
+                ->url(InventoryMovementResource::getUrl('index'))
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left'),
             EditAction::make(),
+            DeleteAction::make(),
         ];
     }
 

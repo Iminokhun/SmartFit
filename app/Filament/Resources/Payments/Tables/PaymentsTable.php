@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Payments\Tables;
 
+use App\Filament\Resources\Payments\PaymentResource;
 use App\Models\Payment;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -19,6 +20,7 @@ class PaymentsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => PaymentResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('customer.full_name')
                     ->searchable()

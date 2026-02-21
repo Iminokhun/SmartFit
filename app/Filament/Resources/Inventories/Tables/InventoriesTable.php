@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Inventories\Tables;
 use App\Enums\InventoryItemType;
 use App\Enums\InventoryStatus;
 use App\Filament\Resources\Expenses\ExpenseResource;
+use App\Filament\Resources\Inventories\InventoryResource;
 use App\Models\Inventory;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -24,6 +25,7 @@ class InventoriesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => InventoryResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('name')
                     ->searchable()

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AssetEvents\Tables;
 
 use App\Enums\AssetEventType;
 use App\Enums\InventoryStatus;
+use App\Filament\Resources\AssetEvents\AssetEventResource;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -16,6 +17,7 @@ class AssetEventsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => AssetEventResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('event_date')
                     ->label('Date')
@@ -70,7 +72,7 @@ class AssetEventsTable
             ])
             ->recordActions([
                 EditAction::make()
-                    ->visible(fn () => auth()->user()?->role === 'admin'),
+                    ->visible(fn () => self::canManage()),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -78,5 +80,13 @@ class AssetEventsTable
                         ->visible(fn () => auth()->user()?->role === 'admin'),
                 ]),
             ]);
+    }
+
+    private static function canManage(): bool
+    {
+        $user = auth()->user();
+        $roleName = strtolower((string) ($user?->role?->name ?? ''));
+
+        return in_array($roleName, ['admin', 'manager'], true) || in_array((int) ($user?->role_id ?? 0), [1, 2], true);
     }
 }

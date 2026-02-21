@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\CustomerSubscriptions\Tables;
 
+use App\Filament\Resources\Customers\CustomerResource;
+use App\Filament\Resources\Payments\PaymentResource;
 use App\Models\Activity;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -19,6 +21,7 @@ class CustomerSubscriptionsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => CustomerResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('customer.full_name')
                     ->label('Customer')

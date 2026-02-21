@@ -1,18 +1,16 @@
 <?php
 
-namespace App\Filament\Resources\Activities\Pages;
+namespace App\Filament\Resources\InventoryMovements\Pages;
 
-use App\Filament\Resources\Activities\ActivityResource;
-use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\InventoryMovements\InventoryMovementResource;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
-class ViewActivity extends ViewRecord
+class ViewInventoryMovement extends ViewRecord
 {
-    protected static string $resource = ActivityResource::class;
+    protected static string $resource = InventoryMovementResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -26,10 +24,5 @@ class ViewActivity extends ViewRecord
             DeleteAction::make(),
         ];
     }
-
-    public function getTitle(): string
-    {
-        // 'full_name' — это название колонки, где хранится имя в вашей базе
-        return $this->record->name;
-    }
 }
+

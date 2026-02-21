@@ -1,24 +1,23 @@
 <?php
 
-namespace App\Filament\Resources\Customers\Pages;
+namespace App\Filament\Resources\AssetEvents\Pages;
 
-use App\Filament\Resources\Customers\CustomerResource;
-use App\Filament\Resources\InventoryMovements\InventoryMovementResource;
+use App\Filament\Resources\AssetEvents\AssetEventResource;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
-class ViewCustomer extends ViewRecord
+class ViewAssetEvent extends ViewRecord
 {
-    protected static string $resource = CustomerResource::class;
+    protected static string $resource = AssetEventResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
             Action::make('back')
                 ->label('Back')
-                ->url(InventoryMovementResource::getUrl('index'))
+                ->url(AssetEventResource::getUrl('index'))
                 ->color('gray')
                 ->icon('heroicon-o-arrow-left'),
             EditAction::make(),
@@ -26,3 +25,4 @@ class ViewCustomer extends ViewRecord
         ];
     }
 }
+

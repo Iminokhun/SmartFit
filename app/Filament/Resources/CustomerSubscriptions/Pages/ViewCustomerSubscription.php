@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\CustomerSubscriptions\Pages;
 
-use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\CustomerSubscriptions\CustomerSubscriptionResource;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -18,9 +18,10 @@ class ViewCustomerSubscription extends ViewRecord
             Action::make('back')
                 ->label('Back')
                 ->url(CustomerSubscriptionResource::getUrl('index'))
-                ->color('success')
-                ->icon('heroicon-o-home'),
+                ->color('gray')
+                ->icon('heroicon-o-arrow-left'),
             EditAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

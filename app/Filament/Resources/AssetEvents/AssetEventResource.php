@@ -5,6 +5,7 @@ namespace App\Filament\Resources\AssetEvents;
 use App\Filament\Resources\AssetEvents\Pages\CreateAssetEvent;
 use App\Filament\Resources\AssetEvents\Pages\EditAssetEvent;
 use App\Filament\Resources\AssetEvents\Pages\ListAssetEvents;
+use App\Filament\Resources\AssetEvents\Pages\ViewAssetEvent;
 use App\Filament\Resources\AssetEvents\Schemas\AssetEventForm;
 use App\Filament\Resources\AssetEvents\Tables\AssetEventsTable;
 use App\Models\AssetEvent;
@@ -45,6 +46,7 @@ class AssetEventResource extends Resource
         return [
             'index' => ListAssetEvents::route('/'),
             'create' => CreateAssetEvent::route('/create'),
+            'view' => ViewAssetEvent::route('/{record}'),
             'edit' => EditAssetEvent::route('/{record}/edit'),
         ];
     }

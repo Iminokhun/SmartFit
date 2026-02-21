@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\InventoryMovements\Tables;
 
+use App\Filament\Resources\InventoryMovements\InventoryMovementResource;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -14,6 +15,7 @@ class InventoryMovementsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => InventoryMovementResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('inventory.name')
                     ->label('Inventory')
@@ -52,7 +54,7 @@ class InventoryMovementsTable
             ])
             ->recordActions([
                 EditAction::make()
-                    ->visible(fn () => auth()->user()?->role === 'admin'),
+                    ->visible(fn () => self::canManage()),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -60,5 +62,13 @@ class InventoryMovementsTable
                         ->visible(fn () => auth()->user()?->role === 'admin'),
                 ]),
             ]);
+    }
+
+    private static function canManage(): bool
+    {
+        $user = auth()->user();
+        $roleName = strtolower((string) ($user?->role?->name ?? ''));
+
+        return in_array($roleName, ['admin', 'manager'], true) || in_array((int) ($user?->role_id ?? 0), [1, 2], true);
     }
 }

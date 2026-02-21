@@ -15,6 +15,7 @@ class HallsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => HallResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('name')
                     ->sortable()

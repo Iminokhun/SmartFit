@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Shifts\Tables;
 
+use App\Filament\Resources\Payments\PaymentResource;
+use App\Filament\Resources\Shifts\ShiftResource;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -15,6 +17,7 @@ class ShiftsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => ShiftResource::getUrl('view', ['record' => $record]))
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('staff.full_name')
@@ -57,12 +60,14 @@ class ShiftsTable
                         'saturday' => 'Saturday',
                         'sunday' => 'Sunday',
                     ])
-                    ->query(function ($query, $state) {
-                        if (! $state) {
+                    ->query(function ($query, array $data) {
+                        $day = $data['value'] ?? null;
+
+                        if (blank($day)) {
                             return $query;
                         }
 
-                        return $query->whereJsonContains('days_of_week', $state);
+                        return $query->whereJsonContains('days_of_week', $day);
                     }),
             ])
             ->recordActions([
@@ -76,4 +81,3 @@ class ShiftsTable
             ]);
     }
 }
-
