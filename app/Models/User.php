@@ -69,7 +69,11 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->role_id == 1;
+        return match ($panel->getId()) {
+            'admin' => $this->hasRole('admin') || $this->role_id === 1,
+            'manager' => $this->hasRole('manager', 'admin') || in_array($this->role_id, [1, 2], true),
+            default => false,
+        };
     }
 
     public function staff()
@@ -80,5 +84,16 @@ class User extends Authenticatable implements FilamentUser
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    private function hasRole(string ...$names): bool
+    {
+        $roleName = strtolower((string) ($this->role?->name ?? ''));
+
+        if ($roleName === '') {
+            return false;
+        }
+
+        return in_array($roleName, array_map('strtolower', $names), true);
     }
 }
