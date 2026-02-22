@@ -683,6 +683,18 @@
     font-weight: 700;
 }
 
+.manager-personal-avatar-image {
+    width: 3rem;
+    height: 3rem;
+    min-width: 3rem;
+    min-height: 3rem;
+    border-radius: 9999px;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    flex-shrink: 0;
+}
+
 .manager-personal-meta {
     min-width: 0;
 }

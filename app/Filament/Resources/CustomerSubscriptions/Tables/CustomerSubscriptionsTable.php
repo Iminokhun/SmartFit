@@ -141,12 +141,14 @@ class CustomerSubscriptionsTable
                     }),
             ])
             ->recordActions([
-                DeleteAction::make(),
+                DeleteAction::make()
+                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
                 EditAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\CustomerSubscription::class)),
                 ]),
             ]);
     }

@@ -74,11 +74,13 @@ class ShiftsTable
             ])
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make(),
+                DeleteAction::make()
+                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\Shift::class)),
                 ]),
             ]);
     }

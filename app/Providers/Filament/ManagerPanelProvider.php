@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\AuthenticateFilamentPanel;
+use App\Http\Middleware\ManagerLoginRateLimit;
 use App\Filament\Pages\ManagerPersonal;
 use App\Filament\Resources\Activities\ActivityResource;
 use App\Filament\Resources\ActivityCategories\ActivityCategoryResource;
@@ -17,7 +19,8 @@ use App\Filament\Resources\Payments\PaymentResource;
 use App\Filament\Resources\Schedules\ScheduleResource;
 use App\Filament\Resources\Shifts\ShiftResource;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
-use Filament\Http\Middleware\Authenticate;
+use App\Filament\Widgets\Manager\ManagerLowStockTable;
+use App\Filament\Widgets\Manager\ManagerOperationsStats;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -25,6 +28,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -68,10 +72,16 @@ class ManagerPanelProvider extends PanelProvider
             ->plugins([
                 FilamentApexChartsPlugin::make(),
             ])
+            ->discoverWidgets(in: app_path('Filament/Widgets/Manager'), for: 'App\Filament\Widgets\Manager')
+            ->widgets([
+                ManagerOperationsStats::class,
+                ManagerLowStockTable::class,
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
+                ManagerLoginRateLimit::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
@@ -82,7 +92,7 @@ class ManagerPanelProvider extends PanelProvider
             ->resourceCreatePageRedirect('index')
             ->resourceEditPageRedirect('index')
             ->authMiddleware([
-                Authenticate::class,
+                AuthenticateFilamentPanel::class,
             ]);
     }
 }

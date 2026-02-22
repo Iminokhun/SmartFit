@@ -16,7 +16,8 @@ class EditCustomerSubscription extends EditRecord
     {
         return [
             ViewAction::make(),
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->visible(fn () => auth()->user()?->can('delete', $this->record)),
         ];
     }
 

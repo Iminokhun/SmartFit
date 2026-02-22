@@ -103,11 +103,13 @@ class SchedulesTable
                     ->icon('heroicon-o-clipboard-document-check')
                     ->url(fn ($record) => \App\Filament\Resources\Schedules\ScheduleResource::getUrl('attendance', ['record' => $record]))
                     ->color('success'),
-                DeleteAction::make(),
+                DeleteAction::make()
+                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\Schedule::class)),
                 ]),
             ]);
     }

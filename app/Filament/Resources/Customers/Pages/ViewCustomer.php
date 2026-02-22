@@ -21,7 +21,8 @@ class ViewCustomer extends ViewRecord
                 ->color('gray')
                 ->icon('heroicon-o-arrow-left'),
             EditAction::make(),
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->visible(fn () => auth()->user()?->can('delete', $this->record)),
         ];
     }
 

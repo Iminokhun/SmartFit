@@ -77,7 +77,7 @@ class AssetEventsTable
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->role === 'admin'),
+                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\AssetEvent::class)),
                 ]),
             ]);
     }

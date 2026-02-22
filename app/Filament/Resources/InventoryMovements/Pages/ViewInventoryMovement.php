@@ -22,7 +22,7 @@ class ViewInventoryMovement extends ViewRecord
                 ->icon('heroicon-o-arrow-left'),
             EditAction::make(),
             DeleteAction::make()
-                ->visible(fn () => auth()->user()?->role === 'admin'),
+                ->visible(fn () => auth()->user()?->can('delete', $this->record)),
         ];
     }
 }

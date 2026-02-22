@@ -1,8 +1,9 @@
 <x-filament::page>
     @php
         $initial = strtoupper(substr((string) $this->profileSummary['name'], 0, 1) ?: 'M');
+        $photoPath = auth()->user()?->staff?->photo;
+        $photoUrl = $photoPath ? \Illuminate\Support\Facades\Storage::url($photoPath) : null;
     @endphp
-
     <div class="manager-personal space-y-6">
         @if (! auth()->user()?->staff)
             <div class="manager-personal-alert">
@@ -12,7 +13,11 @@
 
         <x-filament::section heading="Manager Card" class="manager-personal-section manager-personal-section--card">
             <div class="manager-personal-card">
-                <div class="manager-personal-avatar">{{ $initial }}</div>
+                @if ($photoUrl)
+                    <img src="{{ $photoUrl }}" alt="Manager photo" class="manager-personal-avatar-image">
+                @else
+                    <div class="manager-personal-avatar">{{ $initial }}</div>
+                @endif
                 <div class="manager-personal-meta">
                     <div class="manager-personal-name">{{ $this->profileSummary['name'] }}</div>
                     <div class="manager-personal-sub">

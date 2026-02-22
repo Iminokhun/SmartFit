@@ -21,7 +21,7 @@ class EditInventoryMovement extends EditRecord
     {
         return [
             DeleteAction::make()
-                ->visible(fn () => auth()->user()?->role === 'admin'),
+                ->visible(fn () => auth()->user()?->can('delete', $this->record)),
         ];
     }
 
