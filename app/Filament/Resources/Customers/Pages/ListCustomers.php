@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Customers\Pages;
 
 use App\Filament\Resources\Customers\CustomerResource;
+use App\Filament\Resources\Customers\Widgets\CustomerQuickStats;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
@@ -18,6 +19,13 @@ class ListCustomers extends ListRecords
         return [
             CreateAction::make()
             ->createAnother(false),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            CustomerQuickStats::class,
         ];
     }
 }

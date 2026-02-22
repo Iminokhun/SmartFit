@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Users\Tables;
 
 use App\Filament\Resources\Payments\PaymentResource;
 use App\Filament\Resources\Staff\StaffResource;
+use App\Filament\Resources\Users\UserResource;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -17,7 +18,7 @@ class UsersTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->recordUrl(fn ($record) => StaffResource::getUrl('view', ['record' => $record]))
+            ->recordUrl(fn ($record) => UserResource::getUrl('view', ['record' => $record]))
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('name')

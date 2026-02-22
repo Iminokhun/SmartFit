@@ -28,7 +28,7 @@ class ViewSubscription extends ViewRecord
         return [
             Action::make('back')
                 ->label('Back')
-                ->url(InventoryMovementResource::getUrl('index'))
+                ->url(SubscriptionResource::getUrl('index'))
                 ->color('gray')
                 ->icon('heroicon-o-arrow-left'),
             EditAction::make(),
@@ -68,9 +68,17 @@ class ViewSubscription extends ViewRecord
                             ->label('Visit limit')
                             ->state(fn ($record) => $record->visits_limit ?? 'Unlimited')
                             ->weight('bold'),
+
+                        TextEntry::make('limit_summary')
+                            ->label('Capacity')
+                            ->state(fn ($record) => $record->capacityLabel())
+                            ->badge()
+                            ->color(fn ($record) => $record->capacityColor())
+                            ->columnSpanFull(),
                     ]),
 
                 Section::make('Pricing')
+                    ->columnSpanFull()
                     ->columns(4)
                     ->schema([
                         TextEntry::make('price')

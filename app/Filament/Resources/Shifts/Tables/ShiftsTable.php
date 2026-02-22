@@ -45,12 +45,14 @@ class ShiftsTable
             ->filters([
                 SelectFilter::make('staff_id')
                     ->label('Trainer')
+                    ->multiple()
                     ->relationship('staff', 'full_name')
                     ->searchable()
                     ->preload(),
 
                 SelectFilter::make('day')
                     ->label('Day')
+                    ->multiple()
                     ->options([
                         'monday' => 'Monday',
                         'tuesday' => 'Tuesday',

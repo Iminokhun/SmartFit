@@ -628,3 +628,173 @@
 .overview-drilldown-link:hover {
     text-decoration: underline;
 }
+
+.manager-personal .fi-section {
+    border-radius: 14px;
+}
+
+.manager-personal-section {
+    margin-top: 0.25rem;
+}
+
+.manager-personal-section .fi-section-header {
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.manager-personal-section .fi-section-content {
+    padding-top: 1rem;
+}
+
+.manager-personal-section--salary {
+    margin-top: 0.5rem;
+}
+
+.manager-personal-section--shifts {
+    margin-top: 0.5rem;
+}
+
+.manager-personal-alert {
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    background: #fef2f2;
+    color: #991b1b;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+}
+
+.manager-personal-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.manager-personal-avatar {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.manager-personal-meta {
+    min-width: 0;
+}
+
+.manager-personal-name {
+    font-size: 1.125rem;
+    line-height: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.manager-personal-sub {
+    margin-top: 0.15rem;
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.manager-personal-badges {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.manager-personal-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+}
+
+.manager-personal-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #475569;
+    font-weight: 700;
+}
+
+.manager-personal-table-wrap {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.manager-personal-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.manager-personal-table th,
+.manager-personal-table td {
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.manager-personal-table thead th {
+    text-align: left;
+    font-size: 0.72rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: #f8fafc;
+    font-weight: 700;
+}
+
+.manager-personal-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.manager-personal-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.manager-personal-empty {
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.875rem;
+    padding: 1rem;
+}
+
+.manager-personal-salary-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+    .manager-personal-salary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.manager-personal-salary-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+    padding: 0.85rem 1rem;
+}
+
+.manager-personal-salary-value {
+    color: #0f172a;
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+    font-weight: 700;
+}

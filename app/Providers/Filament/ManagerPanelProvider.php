@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\ManagerPersonal;
 use App\Filament\Resources\Activities\ActivityResource;
 use App\Filament\Resources\ActivityCategories\ActivityCategoryResource;
 use App\Filament\Resources\AssetEvents\AssetEventResource;
@@ -44,6 +45,7 @@ class ManagerPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
+
             ->resources([
                 ScheduleResource::class,
                 HallResource::class,
@@ -61,6 +63,7 @@ class ManagerPanelProvider extends PanelProvider
             ])
             ->pages([
                 Dashboard::class,
+                ManagerPersonal::class,
             ])
             ->plugins([
                 FilamentApexChartsPlugin::make(),

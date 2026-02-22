@@ -63,11 +63,19 @@ class CustomersTable
             ])
             ->filters([
                 SelectFilter::make('status')
+                    ->multiple()
                     ->options([
                         'active' => 'Active',
                         'inactive' => 'Inactive',
                         'blocked' => 'Blocked',
                         'deleted' => 'Deleted',
+                    ]),
+
+                SelectFilter::make('gender')
+                    ->multiple()
+                    ->options([
+                        'male' => 'Male',
+                        'female' => 'Female',
                     ]),
 
                 Filter::make('created_at')

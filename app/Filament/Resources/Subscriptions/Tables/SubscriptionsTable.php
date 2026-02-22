@@ -37,7 +37,14 @@ class SubscriptionsTable
 
                 TextColumn::make('visits_limit')
                     ->label('Visit limit')
+                    ->formatStateUsing(fn ($state) => $state ?? 'Unlimited')
                     ->sortable(),
+
+                TextColumn::make('limit_summary')
+                    ->label('Capacity')
+                    ->state(fn ($record) => $record->capacityLabel())
+                    ->badge()
+                    ->color(fn ($record) => $record->capacityColor()),
 
                 TextColumn::make('price')
                     ->money('UZS')

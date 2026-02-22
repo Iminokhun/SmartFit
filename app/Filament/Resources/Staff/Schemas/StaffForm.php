@@ -55,6 +55,15 @@ class StaffForm
                             ->email()
                             ->nullable(),
 
+                        Select::make('user_id')
+                            ->label('Linked user')
+                            ->relationship('user', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->helperText('Required for manager personal page and account linkage.'),
+
                         FileUpload::make('photo')
                             ->image()
                             ->directory('staff-photos'),

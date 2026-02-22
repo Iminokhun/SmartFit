@@ -35,4 +35,55 @@ class Subscription extends Model
 
         return max(0, round($final, 2));
     }
+
+    public function capacityUsed(): int
+    {
+        return (int) ($this->customers_count ?? $this->customers()->count());
+    }
+
+    public function capacityAvailable(): ?int
+    {
+        $limit = $this->capacityLimit();
+
+        if ($limit === null) {
+            return null;
+        }
+
+        return max(0, $limit - $this->capacityUsed());
+    }
+
+    public function capacityLimit(): ?int
+    {
+        $limit = $this->visits_limit;
+
+        if ($limit === null) {
+            return null;
+        }
+
+        $limit = (int) $limit;
+
+        return $limit > 0 ? $limit : null;
+    }
+
+    public function capacityLabel(): string
+    {
+        $limit = $this->capacityLimit();
+
+        if ($limit === null) {
+            return 'Unlimited';
+        }
+
+        return "Available {$this->capacityAvailable()}";
+    }
+
+    public function capacityColor(): string
+    {
+        $limit = $this->capacityLimit();
+
+        if ($limit === null) {
+            return 'gray';
+        }
+
+        return $this->capacityUsed() >= $limit ? 'danger' : 'success';
+    }
 }

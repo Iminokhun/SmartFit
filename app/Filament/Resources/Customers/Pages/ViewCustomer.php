@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Customers\Pages;
 
 use App\Filament\Resources\Customers\CustomerResource;
-use App\Filament\Resources\InventoryMovements\InventoryMovementResource;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -18,11 +17,20 @@ class ViewCustomer extends ViewRecord
         return [
             Action::make('back')
                 ->label('Back')
-                ->url(InventoryMovementResource::getUrl('index'))
+                ->url(CustomerResource::getUrl('index'))
                 ->color('gray')
                 ->icon('heroicon-o-arrow-left'),
             EditAction::make(),
             DeleteAction::make(),
         ];
+    }
+
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+
+        $this->record->load([
+            'subscriptions.subscription.activity',
+        ]);
     }
 }

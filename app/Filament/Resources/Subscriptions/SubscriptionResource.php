@@ -40,6 +40,11 @@ class SubscriptionResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()->withCount('customers');
+    }
+
     public static function getPages(): array
     {
         return [
