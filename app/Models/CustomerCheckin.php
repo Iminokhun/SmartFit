@@ -2,24 +2,20 @@
 
 namespace App\Models;
 
-use App\Enums\PaymentMethod;
 use Illuminate\Database\Eloquent\Model;
 
-class Payment extends Model
+class CustomerCheckin extends Model
 {
     protected $fillable = [
         'customer_id',
         'customer_subscription_id',
-        'amount',
-        'method',
-        'status',
-        'description',
-        'telegram_payment_charge_id',
-        'provider_payment_charge_id',
+        'checkin_token_id',
+        'checked_in_by_user_id',
+        'checked_in_at',
     ];
 
     protected $casts = [
-        'method' => PaymentMethod::class,
+        'checked_in_at' => 'datetime',
     ];
 
     public function customer()
@@ -31,4 +27,15 @@ class Payment extends Model
     {
         return $this->belongsTo(CustomerSubscription::class);
     }
+
+    public function token()
+    {
+        return $this->belongsTo(CheckinToken::class, 'checkin_token_id');
+    }
+
+    public function checkedInBy()
+    {
+        return $this->belongsTo(User::class, 'checked_in_by_user_id');
+    }
 }
+

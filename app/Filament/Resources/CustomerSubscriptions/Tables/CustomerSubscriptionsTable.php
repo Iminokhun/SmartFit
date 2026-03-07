@@ -21,7 +21,9 @@ class CustomerSubscriptionsTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->recordUrl(fn ($record) => CustomerResource::getUrl('view', ['record' => $record]))
+            ->recordUrl(fn ($record) => $record->customer_id
+                ? CustomerResource::getUrl('view', ['record' => $record->customer_id])
+                : null)
             ->columns([
                 TextColumn::make('customer.full_name')
                     ->label('Customer')
@@ -49,9 +51,11 @@ class CustomerSubscriptionsTable
                     ->badge()
                     ->color(fn ($state) => match ($state) {
                         'active' => 'success',
+                        'pending' => 'info',
                         'expired' => 'danger',
                         'frozen' => 'warning',
                         'cancelled' => 'gray',
+                        default => 'gray',
                     })
                     ->formatStateUsing(fn ($state) => ucfirst((string) $state))
                     ->label('Status'),
@@ -83,6 +87,7 @@ class CustomerSubscriptionsTable
                     ->multiple()
                     ->options([
                         'active' => 'Active',
+                        'pending' => 'Pending',
                         'expired' => 'Expired',
                         'frozen' => 'Frozen',
                         'cancelled' => 'Cancelled',

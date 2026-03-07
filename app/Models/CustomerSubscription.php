@@ -38,6 +38,11 @@ class CustomerSubscription extends Model
         return $this->belongsTo(Subscription::class);
     }
 
+    public function checkins()
+    {
+        return $this->hasMany(CustomerCheckin::class);
+    }
+
     public function finalPrice(): float
     {
         return $this->subscription?->finalPrice() ?? 0.0;

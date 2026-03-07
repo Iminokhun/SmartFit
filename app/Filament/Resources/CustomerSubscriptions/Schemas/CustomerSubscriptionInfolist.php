@@ -36,12 +36,15 @@ class CustomerSubscriptionInfolist
 
                         TextEntry::make('status')
                             ->badge()
-                            ->colors([
-                                'active' => 'Active',
-                                'expired' => 'Expired',
-                                'frozen' => 'Frozen',
-                                'cancelled' => 'Cancelled',
-                            ]),
+                            ->color(fn ($state) => match ($state) {
+                                'active' => 'success',
+                                'pending' => 'info',
+                                'expired' => 'danger',
+                                'frozen' => 'warning',
+                                'cancelled' => 'gray',
+                                default => 'gray',
+                            })
+                            ->formatStateUsing(fn ($state) => ucfirst((string) $state)),
 
                         TextEntry::make('paid_amount')
                             ->label('Paid')

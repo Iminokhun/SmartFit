@@ -17,6 +17,9 @@ class CustomerSubscriptionQuickStats extends StatsOverviewWidget
             Stat::make('Active', (string) CustomerSubscription::query()->where('status', 'active')->count())
                 ->color('success'),
 
+            Stat::make('Pending', (string) CustomerSubscription::query()->where('status', 'pending')->count())
+                ->color('info'),
+
             Stat::make('Expired', (string) CustomerSubscription::query()->where('status', 'expired')->count())
                 ->color('danger'),
 
@@ -25,4 +28,3 @@ class CustomerSubscriptionQuickStats extends StatsOverviewWidget
         ];
     }
 }
-

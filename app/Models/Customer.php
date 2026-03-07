@@ -31,4 +31,19 @@ class Customer extends Model
     {
         return $this->hasMany(Visit::class);
     }
+
+    public function telegramLink()
+    {
+        return $this->hasOne(TelegramLink::class);
+    }
+
+    public function checkinTokens()
+    {
+        return $this->hasMany(CheckinToken::class);
+    }
+
+    public function checkins()
+    {
+        return $this->hasMany(CustomerCheckin::class);
+    }
 }

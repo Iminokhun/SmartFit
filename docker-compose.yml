@@ -71,6 +71,23 @@ services:
         depends_on:
             - gym-app
 
+    #Queue Worker Service
+    gym-worker:
+        build: ./
+        image: gym/php
+        container_name: gym-worker
+        restart: unless-stopped
+        working_dir: /var/www/default
+        volumes:
+            - ./:/var/www/default
+            - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+        command: php artisan queue:work --queue=default --sleep=1 --tries=3 --timeout=120
+        networks:
+            - gym-app-network
+        depends_on:
+            - gym-app
+            - gym-db
+
     #Mailhog
     gym-mailhog:
         image: mailhog/mailhog:latest

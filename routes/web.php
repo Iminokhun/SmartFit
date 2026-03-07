@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\TelegramMiniAppController;
+use App\Http\Controllers\TelegramWebhookController;
+use App\Http\Controllers\CheckinQrController;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
@@ -10,6 +13,39 @@ use Laravel\Fortify\Features;
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+Route::view('/staff', 'auth.staff-login')->name('staff.login');
+Route::view('/staff/login', 'auth.staff-login');
+
+Route::post('/telegram/webhook', TelegramWebhookController::class)
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('telegram.webhook');
+
+Route::get('/telegram/mini-app', [TelegramMiniAppController::class, 'show'])
+    ->name('telegram.mini-app.show');
+
+Route::get('/telegram/mini-app/subscriptions', [TelegramMiniAppController::class, 'subscriptions'])
+    ->name('telegram.mini-app.subscriptions');
+
+Route::post('/telegram/mini-app/link', [TelegramMiniAppController::class, 'link'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('telegram.mini-app.link');
+
+Route::post('/telegram/mini-app/me', [TelegramMiniAppController::class, 'me'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('telegram.mini-app.me');
+
+Route::post('/telegram/mini-app/catalog', [TelegramMiniAppController::class, 'catalog'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('telegram.mini-app.catalog');
+
+Route::post('/telegram/mini-app/purchase/invoice', [TelegramMiniAppController::class, 'purchaseInvoice'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('telegram.mini-app.purchase.invoice');
+
+Route::post('/telegram/mini-app/checkin-qr', [TelegramMiniAppController::class, 'checkinQr'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('telegram.mini-app.checkin-qr');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
@@ -32,4 +68,9 @@ Route::middleware(['auth'])->group(function () {
             ),
         )
         ->name('two-factor.show');
+
+    Route::post('/checkin/scan/resolve', [CheckinQrController::class, 'resolve'])
+        ->name('checkin.scan.resolve');
+    Route::post('/checkin/scan/consume', [CheckinQrController::class, 'consume'])
+        ->name('checkin.scan.consume');
 });

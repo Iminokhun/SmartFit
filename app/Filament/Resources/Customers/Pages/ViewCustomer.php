@@ -26,6 +26,11 @@ class ViewCustomer extends ViewRecord
         ];
     }
 
+    public function getTitle(): string
+    {
+        return (string) ($this->record->full_name ?? 'Customer');
+    }
+
     public function mount(int|string $record): void
     {
         parent::mount($record);

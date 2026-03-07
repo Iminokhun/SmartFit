@@ -101,6 +101,7 @@ class CustomerSubscriptionForm
                     Select::make('status')
                         ->options([
                             'active' => 'Active',
+                            'pending' => 'Pending',
                             'expired' => 'Expired',
                             'frozen' => 'Frozen',
                             'cancelled' => 'Cancelled',

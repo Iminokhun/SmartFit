@@ -1,0 +1,471 @@
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f5f7fb;
+    color: #0f172a;
+}
+
+.wrap {
+    max-width: 440px;
+    margin: 0 auto;
+    padding: 18px 16px 28px;
+}
+
+.card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 16px;
+}
+
+h1 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+}
+
+.muted {
+    color: #64748b;
+    font-size: 13px;
+    margin: 0 0 14px;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    margin: 12px 0 6px;
+    font-weight: 600;
+}
+
+input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 42px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 14px;
+}
+
+button {
+    width: 100%;
+    margin-top: 16px;
+    height: 44px;
+    border: 0;
+    border-radius: 10px;
+    background: #2563eb;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.msg {
+    margin-top: 12px;
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    display: none;
+}
+
+.msg.ok {
+    display: block;
+    background: #ecfdf3;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.msg.err {
+    display: block;
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.header-sub {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.avatar-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: #0f172a;
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+}
+
+.smart-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: 18px;
+    color: #fff;
+    box-shadow: 0 18px 40px -20px rgba(15, 23, 42, 0.7);
+    margin: 10px 0 14px;
+}
+
+.smart-card.premium {
+    background: linear-gradient(145deg, #0f172a, #1f2937 50%, #020617);
+}
+
+.smart-card.warning {
+    background: linear-gradient(145deg, #9a3412, #b45309 50%, #f59e0b);
+}
+
+.smart-card::after {
+    content: "";
+    position: absolute;
+    right: -24px;
+    top: -24px;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    filter: blur(16px);
+}
+
+.smart-muted {
+    color: rgba(255, 255, 255, 0.66);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.smart-main {
+    font-size: 21px;
+    font-weight: 800;
+    margin: 4px 0 0;
+}
+
+.smart-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    margin-top: 24px;
+    gap: 12px;
+}
+
+.smart-value {
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.kpi {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.kpi-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #f8fafc;
+}
+
+.kpi-label {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.kpi-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.schedule-list {
+    margin: 0;
+    padding-left: 18px;
+    color: #0f172a;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.quick-actions {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.qa-btn {
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+    border-radius: 12px;
+    padding: 10px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e3a8a;
+}
+
+.qa-btn.is-active {
+    border-color: #93c5fd;
+    background: #dbeafe;
+}
+
+.subs-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.subs-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #f8fafc;
+}
+
+.subs-item-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+
+.subs-item-meta {
+    font-size: 12px;
+    color: #475569;
+    line-height: 1.4;
+}
+
+.qr-svg-wrap {
+    display: grid;
+    place-items: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+    padding: 12px;
+    min-height: 180px;
+}
+
+.qr-svg-wrap svg {
+    width: 180px;
+    height: 180px;
+}
+
+.qr-expire-text {
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.back-link {
+    display: inline-block;
+    padding: 6px 10px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    border-radius: 10px;
+    color: #1d4ed8;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.filters {
+    display: grid;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.filters select,
+.filters input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 40px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 14px;
+    background: #fff;
+}
+
+
+.plans-list {
+    margin-top: 10px;
+    display: grid;
+    gap: 10px;
+}
+
+.plan-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    background: #fff;
+    padding: 14px;
+    box-shadow: 0 6px 18px -14px rgba(15, 23, 42, 0.35);
+}
+
+.plan-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.plan-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+
+.plan-meta {
+    font-size: 12px;
+    color: #475569;
+    line-height: 1.4;
+}
+
+.plan-badge {
+    display: inline-block;
+    background: #dcfce7;
+    color: #166534;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.plan-chip-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.plan-chip {
+    display: inline-block;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+}
+
+.plan-price-row {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.plan-price-main {
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+}
+
+.plan-price-currency {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.plan-price-old {
+    font-size: 12px;
+    color: #64748b;
+    text-decoration: line-through;
+    margin-bottom: 2px;
+}
+
+.plan-cta-btn {
+    border: 0;
+    border-radius: 12px;
+    padding: 10px 14px;
+    background: #111827;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.section-block {
+    margin-top: 12px;
+}
+
+.section-head {
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.carousel-list {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(220px, 220px);
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.plan-card-compact .plan-title {
+    font-size: 14px;
+}
+
+.plan-card-compact .plan-price-main {
+    font-size: 18px;
+}
+
+.plan-card-compact .plan-badge {
+    font-size: 9px;
+    padding: 3px 7px;
+}
+
+.plan-card-compact .plan-chip {
+    font-size: 10px;
+}
+
+.plan-card-compact .plan-cta-btn {
+    padding: 8px 10px;
+    font-size: 12px;
+}

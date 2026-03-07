@@ -1,0 +1,504 @@
+<?php
+
+namespace App\Services\Telegram;
+
+use App\Models\Customer;
+use App\Models\CustomerSubscription;
+use App\Models\Schedule;
+use App\Models\Subscription;
+use App\Models\TelegramLink;
+use Carbon\Carbon;
+
+class TelegramMiniAppService
+{
+    public function resolveTelegramUserId(string $initData): ?int
+    {
+        $telegramUser = $this->validateAndExtractTelegramUser($initData);
+        if (! $telegramUser) {
+            return null;
+        }
+
+        $telegramUserId = (int) ($telegramUser['id'] ?? 0);
+
+        return $telegramUserId > 0 ? $telegramUserId : null;
+    }
+
+    public function catalog(string $initData): array
+    {
+        $telegramUser = $this->validateAndExtractTelegramUser($initData);
+        if (! $telegramUser) {
+            return [
+                'ok' => false,
+                'status' => 422,
+                'message' => 'Invalid Telegram session.',
+            ];
+        }
+
+        $telegramUserId = (int) ($telegramUser['id'] ?? 0);
+        $link = TelegramLink::query()
+            ->where('telegram_user_id', $telegramUserId)
+            ->with('customer')
+            ->first();
+
+        $plans = Subscription::query()
+            ->with('activity:id,name')
+            ->withCount([
+                'customers as active_customers_count' => fn ($query) => $query->where('status', 'active'),
+            ])
+            ->orderBy('price')
+            ->get()
+            ->filter(function (Subscription $subscription) {
+                $limit = $subscription->visits_limit;
+
+                if ($limit === null) {
+                    return true;
+                }
+
+                return (int) $subscription->active_customers_count < (int) $limit;
+            })
+            ->map(function (Subscription $subscription) {
+                return [
+                    'id' => (int) $subscription->id,
+                    'name' => (string) $subscription->name,
+                    'activity' => (string) ($subscription->activity?->name ?? 'General'),
+                    'duration_days' => (int) ($subscription->duration_days ?? 0),
+                    'visits_limit' => $subscription->visits_limit === null ? null : (int) $subscription->visits_limit,
+                    'price' => (float) ($subscription->price ?? 0),
+                    'discount' => (float) ($subscription->discount ?? 0),
+                    'final_price' => $subscription->finalPrice(),
+                ];
+            })
+            ->values()
+            ->all();
+
+        $activities = collect($plans)
+            ->pluck('activity')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        return [
+            'ok' => true,
+            'status' => 200,
+            'linked' => (bool) ($link && $link->customer),
+            'customer' => $link && $link->customer
+                ? [
+                    'id' => (int) $link->customer->id,
+                    'full_name' => (string) $link->customer->full_name,
+                ]
+                : null,
+            'activities' => $activities,
+            'plans' => $plans,
+        ];
+    }
+
+    public function getProfileByInitData(string $initData): array
+    {
+        $telegramUser = $this->validateAndExtractTelegramUser($initData);
+        if (! $telegramUser) {
+            return [
+                'ok' => false,
+                'status' => 422,
+                'message' => 'Invalid Telegram session.',
+            ];
+        }
+
+        $telegramUserId = (int) ($telegramUser['id'] ?? 0);
+
+        $link = TelegramLink::query()
+            ->where('telegram_user_id', $telegramUserId)
+            ->with('customer')
+            ->first();
+
+        if (! $link || ! $link->customer) {
+            return [
+                'ok' => true,
+                'status' => 200,
+                'linked' => false,
+            ];
+        }
+
+        return [
+            'ok' => true,
+            'status' => 200,
+            'linked' => true,
+            'customer' => [
+                'id' => $link->customer->id,
+                'full_name' => $link->customer->full_name,
+            ],
+            'subscription' => $this->subscriptionSummary((int) $link->customer->id),
+            'active_subscriptions' => $this->activeSubscriptions((int) $link->customer->id),
+            'visits' => $this->visitsSummary((int) $link->customer->id),
+            'schedule' => $this->scheduleSummary((int) $link->customer->id),
+        ];
+    }
+
+    public function linkByIdentity(string $initData, string $phone, string $birthDate): array
+    {
+        $telegramUser = $this->validateAndExtractTelegramUser($initData);
+        if (! $telegramUser) {
+            return [
+                'ok' => false,
+                'status' => 422,
+                'message' => 'Invalid Telegram session.',
+            ];
+        }
+
+        $phoneNormalized = $this->normalizePhone($phone);
+        if (! $phoneNormalized) {
+            return [
+                'ok' => false,
+                'status' => 422,
+                'message' => 'Invalid phone format.',
+            ];
+        }
+
+        $customer = Customer::query()
+            ->whereDate('birth_date', Carbon::parse($birthDate)->toDateString())
+            ->whereNotNull('phone')
+            ->get()
+            ->first(function (Customer $customer) use ($phoneNormalized) {
+                return $this->normalizePhone((string) $customer->phone) === $phoneNormalized;
+            });
+
+        if (! $customer) {
+            return [
+                'ok' => false,
+                'status' => 422,
+                'message' => 'Data mismatch. Please check phone and birth date.',
+            ];
+        }
+
+        $telegramUserId = (int) ($telegramUser['id'] ?? 0);
+        if ($telegramUserId === 0) {
+            return [
+                'ok' => false,
+                'status' => 422,
+                'message' => 'Telegram user not found.',
+            ];
+        }
+
+        $existingByTelegram = TelegramLink::query()
+            ->where('telegram_user_id', $telegramUserId)
+            ->first();
+
+        if ($existingByTelegram && (int) $existingByTelegram->customer_id !== (int) $customer->id) {
+            return [
+                'ok' => false,
+                'status' => 422,
+                'message' => 'This Telegram account is already linked to another customer.',
+            ];
+        }
+
+        TelegramLink::updateOrCreate(
+            ['customer_id' => (int) $customer->id],
+            [
+                'telegram_user_id' => $telegramUserId,
+                'telegram_username' => $telegramUser['username'] ?? null,
+                'first_name' => $telegramUser['first_name'] ?? null,
+                'last_name' => $telegramUser['last_name'] ?? null,
+                'is_verified' => true,
+                'linked_at' => now(),
+            ]
+        );
+
+        return [
+            'ok' => true,
+            'status' => 200,
+            'message' => 'Linked successfully.',
+            'customer' => [
+                'id' => $customer->id,
+                'full_name' => $customer->full_name,
+            ],
+            'subscription' => $this->subscriptionSummary((int) $customer->id),
+            'active_subscriptions' => $this->activeSubscriptions((int) $customer->id),
+            'visits' => $this->visitsSummary((int) $customer->id),
+            'schedule' => $this->scheduleSummary((int) $customer->id),
+        ];
+    }
+
+    private function subscriptionSummary(int $customerId): array
+    {
+        $active = CustomerSubscription::query()
+            ->with('subscription')
+            ->where('customer_id', $customerId)
+            ->where('status', 'active')
+            ->orderBy('end_date')
+            ->first();
+
+        if (! $active) {
+            return [
+                'has_active' => false,
+                'name' => null,
+                'end_date' => null,
+            ];
+        }
+
+        return [
+            'has_active' => true,
+            'name' => $active->subscription?->name ?? 'Subscription',
+            'end_date' => (string) $active->end_date,
+        ];
+    }
+
+    private function visitsSummary(int $customerId): array
+    {
+        $active = CustomerSubscription::query()
+            ->where('customer_id', $customerId)
+            ->where('status', 'active')
+            ->orderBy('end_date')
+            ->first();
+
+        if (! $active) {
+            return [
+                'has_active' => false,
+                'left' => null,
+                'is_unlimited' => false,
+            ];
+        }
+
+        if ($active->remaining_visits === null) {
+            return [
+                'has_active' => true,
+                'left' => null,
+                'is_unlimited' => true,
+            ];
+        }
+
+        return [
+            'has_active' => true,
+            'left' => (int) $active->remaining_visits,
+            'is_unlimited' => false,
+        ];
+    }
+
+    private function activeSubscriptions(int $customerId): array
+    {
+        $rows = CustomerSubscription::query()
+            ->with('subscription:id,name')
+            ->where('customer_id', $customerId)
+            ->where('status', 'active')
+            ->orderBy('end_date')
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return [];
+        }
+
+        return $rows->map(function (CustomerSubscription $row) {
+            $remaining = $row->remaining_visits === null ? 'Unlimited' : (string) $row->remaining_visits;
+
+            return [
+                'name' => $row->subscription?->name ?? 'Subscription',
+                'end_date' => (string) $row->end_date,
+                'remaining_visits' => $remaining,
+                'payment_status' => (string) ($row->payment_status ?? 'unknown'),
+            ];
+        })->values()->all();
+    }
+
+    private function scheduleSummary(int $customerId): array
+    {
+        $activityIds = CustomerSubscription::query()
+            ->where('customer_id', $customerId)
+            ->where('status', 'active')
+            ->whereHas('subscription')
+            ->with('subscription:id,activity_id')
+            ->get()
+            ->pluck('subscription.activity_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($activityIds)) {
+            return ['has_items' => false, 'items' => []];
+        }
+
+        $schedules = Schedule::query()
+            ->with(['activity:id,name', 'hall:id,name'])
+            ->whereIn('activity_id', $activityIds)
+            ->get();
+
+        if ($schedules->isEmpty()) {
+            return ['has_items' => false, 'items' => []];
+        }
+
+        $todayKey = strtolower(now()->format('l'));
+        $todayItems = $schedules
+            ->filter(fn (Schedule $schedule) => in_array($todayKey, $this->normalizedDays($schedule), true))
+            ->sortBy('start_time')
+            ->take(5)
+            ->values();
+
+        if ($todayItems->isNotEmpty()) {
+            $items = $todayItems->map(function (Schedule $schedule) {
+                $start = Carbon::parse($schedule->start_time)->format('H:i');
+                $end = Carbon::parse($schedule->end_time)->format('H:i');
+                $activity = $schedule->activity?->name ?? 'Activity';
+                $hall = $schedule->hall?->name ?? '-';
+
+                return "{$start}-{$end} | {$activity} | Hall: {$hall}";
+            })->all();
+
+            return ['has_items' => true, 'items' => $items];
+        }
+
+        // Fallback: if no classes today, show nearest upcoming classes.
+        $upcoming = $schedules
+            ->map(function (Schedule $schedule) {
+                $next = $this->nextClassDayMeta($schedule);
+                if (! $next) {
+                    return null;
+                }
+
+                return [
+                    'schedule' => $schedule,
+                    'days_ahead' => $next['days_ahead'],
+                    'day_label' => $next['day_label'],
+                ];
+            })
+            ->filter()
+            ->sortBy([
+                ['days_ahead', 'asc'],
+                [fn (array $row) => (string) $row['schedule']->start_time, 'asc'],
+            ])
+            ->take(5)
+            ->values();
+
+        if ($upcoming->isEmpty()) {
+            return ['has_items' => false, 'items' => []];
+        }
+
+        $items = $upcoming->map(function (array $row) {
+            /** @var Schedule $schedule */
+            $schedule = $row['schedule'];
+            $start = Carbon::parse($schedule->start_time)->format('H:i');
+            $end = Carbon::parse($schedule->end_time)->format('H:i');
+            $activity = $schedule->activity?->name ?? 'Activity';
+            $hall = $schedule->hall?->name ?? '-';
+            $day = $row['day_label'];
+
+            return "{$day} {$start}-{$end} | {$activity} | Hall: {$hall}";
+        })->all();
+
+        return ['has_items' => true, 'items' => $items];
+    }
+
+    private function normalizedDays(Schedule $schedule): array
+    {
+        $days = is_array($schedule->days_of_week) ? $schedule->days_of_week : [];
+
+        return collect($days)
+            ->map(fn ($day) => strtolower(trim((string) $day)))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function nextClassDayMeta(Schedule $schedule): ?array
+    {
+        $dayToIndex = [
+            'monday' => 1,
+            'tuesday' => 2,
+            'wednesday' => 3,
+            'thursday' => 4,
+            'friday' => 5,
+            'saturday' => 6,
+            'sunday' => 7,
+        ];
+
+        $currentIndex = (int) now()->dayOfWeekIso;
+        $bestDelta = null;
+        $bestDay = null;
+
+        foreach ($this->normalizedDays($schedule) as $day) {
+            $target = $dayToIndex[$day] ?? null;
+            if (! $target) {
+                continue;
+            }
+
+            $delta = ($target - $currentIndex + 7) % 7;
+            if ($delta === 0) {
+                $delta = 7;
+            }
+
+            if ($bestDelta === null || $delta < $bestDelta) {
+                $bestDelta = $delta;
+                $bestDay = ucfirst($day);
+            }
+        }
+
+        if ($bestDelta === null || $bestDay === null) {
+            return null;
+        }
+
+        return [
+            'days_ahead' => $bestDelta,
+            'day_label' => $bestDay,
+        ];
+    }
+
+    private function validateAndExtractTelegramUser(string $initData): ?array
+    {
+        parse_str($initData, $parsed);
+
+        $hash = (string) ($parsed['hash'] ?? '');
+        if ($hash === '') {
+            return null;
+        }
+
+        unset($parsed['hash']);
+
+        ksort($parsed);
+        $dataCheckString = collect($parsed)
+            ->map(fn ($value, $key) => "{$key}={$value}")
+            ->implode("\n");
+
+        $botToken = (string) config('services.telegram.bot_token');
+        if ($botToken === '') {
+            return null;
+        }
+
+        $secretKey = hash_hmac('sha256', $botToken, 'WebAppData', true);
+        $calculatedHash = hash_hmac('sha256', $dataCheckString, $secretKey);
+
+        if (! hash_equals($calculatedHash, $hash)) {
+            return null;
+        }
+
+        $authDate = (int) ($parsed['auth_date'] ?? 0);
+        if ($authDate > 0 && now()->timestamp - $authDate > 86400) {
+            return null;
+        }
+
+        $userJson = (string) ($parsed['user'] ?? '');
+        $user = json_decode($userJson, true);
+
+        return is_array($user) ? $user : null;
+    }
+
+    private function normalizePhone(string $phone): ?string
+    {
+        $digits = preg_replace('/\D+/', '', $phone);
+        if (! $digits) {
+            return null;
+        }
+
+        if (str_starts_with($digits, '998') && strlen($digits) === 12) {
+            return $digits;
+        }
+
+        if (str_starts_with($digits, '0') && strlen($digits) === 10) {
+            return '998' . substr($digits, 1);
+        }
+
+        if (strlen($digits) === 9) {
+            return '998' . $digits;
+        }
+
+        return $digits;
+    }
+}

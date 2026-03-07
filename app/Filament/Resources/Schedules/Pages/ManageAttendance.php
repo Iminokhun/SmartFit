@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\CustomerSubscription;
 use App\Models\Schedule;
 use App\Models\Visit;
+use App\Services\Subscriptions\CustomerSubscriptionLifecycleService;
 use Carbon\Carbon;
 use Filament\Resources\Pages\Page;
 
@@ -85,8 +86,8 @@ class ManageAttendance extends Page
         $subscription = $this->resolveActiveSubscription($customerId, $date, $schedule);
         if ($subscription && $subscription->remaining_visits !== null && $wasConsuming !== $isConsuming) {
             $delta = $isConsuming ? 1 : -1;
-            $subscription->remaining_visits = max(0, $subscription->remaining_visits - $delta);
-            $subscription->save();
+            app(CustomerSubscriptionLifecycleService::class)
+                ->applyVisitDelta($subscription, $delta, $date);
         }
 
         $this->loadRows();
