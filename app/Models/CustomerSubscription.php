@@ -9,6 +9,7 @@ class CustomerSubscription extends Model
     protected $fillable = [
         'customer_id',
         'subscription_id',
+        'agreed_price',
         'start_date',
         'end_date',
         'remaining_visits',
@@ -19,6 +20,7 @@ class CustomerSubscription extends Model
     ];
 
     protected $casts = [
+        'agreed_price' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'debt' => 'decimal:2',
     ];
@@ -45,6 +47,10 @@ class CustomerSubscription extends Model
 
     public function finalPrice(): float
     {
+        if ($this->agreed_price !== null) {
+            return (float) $this->agreed_price;
+        }
+
         return $this->subscription?->finalPrice() ?? 0.0;
     }
 

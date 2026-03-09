@@ -13,12 +13,12 @@ class PaymentObserver
             return;
         }
 
-        $subscription = $payment->customerSubscription?->subscription;
-        if (! $subscription || $payment->amount === null) {
+        $customerSubscription = $payment->customerSubscription;
+        if (! $customerSubscription || $payment->amount === null) {
             return;
         }
 
-        $price = $subscription->finalPrice();
+        $price = $customerSubscription->finalPrice();
         $amount = (float) $payment->amount;
         if ($price <= 0 || $amount <= 0) {
             return;

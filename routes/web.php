@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\TelegramMiniAppController;
+use App\Http\Controllers\TelegramStaffMiniAppController;
+use App\Http\Controllers\TelegramStaffWebhookController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\CheckinQrController;
 use App\Livewire\Settings\Appearance;
@@ -20,6 +22,10 @@ Route::view('/staff/login', 'auth.staff-login');
 Route::post('/telegram/webhook', TelegramWebhookController::class)
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
     ->name('telegram.webhook');
+
+Route::post('/telegram/staff/webhook', TelegramStaffWebhookController::class)
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('telegram.staff.webhook');
 
 Route::get('/telegram/mini-app', [TelegramMiniAppController::class, 'show'])
     ->name('telegram.mini-app.show');
@@ -46,6 +52,25 @@ Route::post('/telegram/mini-app/purchase/invoice', [TelegramMiniAppController::c
 Route::post('/telegram/mini-app/checkin-qr', [TelegramMiniAppController::class, 'checkinQr'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
     ->name('telegram.mini-app.checkin-qr');
+
+Route::get('/telegram/staff/scan', [TelegramStaffMiniAppController::class, 'show'])
+    ->name('telegram.staff.scan.show');
+
+Route::post('/telegram/staff/scan/me', [TelegramStaffMiniAppController::class, 'me'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('telegram.staff.scan.me');
+
+Route::post('/telegram/staff/scan/link', [TelegramStaffMiniAppController::class, 'link'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('telegram.staff.scan.link');
+
+Route::post('/telegram/staff/scan/resolve', [TelegramStaffMiniAppController::class, 'resolve'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('telegram.staff.scan.resolve');
+
+Route::post('/telegram/staff/scan/consume', [TelegramStaffMiniAppController::class, 'consume'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('telegram.staff.scan.consume');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])

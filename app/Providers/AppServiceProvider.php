@@ -28,6 +28,7 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiter;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 
@@ -59,6 +60,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Shift::class, AdminDeleteCrudPolicy::class);
         Gate::policy(Subscription::class, AdminDeleteCrudPolicy::class);
         Gate::policy(Visit::class, AdminDeleteCrudPolicy::class);
+
+        URL::forceScheme('https');
 
         Payment::observe(PaymentObserver::class);
         InventoryMovement::observe(InventoryMovementObserver::class);

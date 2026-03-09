@@ -44,8 +44,8 @@ class PaymentForm
                         $sub = CustomerSubscription::with('subscription')
                             ->find($state);
 
-                        if ($sub && $sub->subscription) {
-                            $set('amount', $sub->subscription->finalPrice());
+                        if ($sub) {
+                            $set('amount', $sub->finalPrice());
                             $set('status', 'paid');
                         }
                     }),
@@ -56,8 +56,8 @@ class PaymentForm
                         $sub = CustomerSubscription::with('subscription')
                             ->find($get('customer_subscription_id'));
 
-                        return $sub?->subscription
-                            ? number_format($sub->subscription->finalPrice(), 2)
+                        return $sub
+                            ? number_format($sub->finalPrice(), 2)
                             : '-';
                     })
                     ->reactive(),
@@ -76,7 +76,7 @@ class PaymentForm
                                     return;
                                 }
 
-                                $price = $sub->subscription->finalPrice();
+                                $price = $sub->finalPrice();
                                 $half = round($price / 2, 2);
                                 $amount = round((float) $value, 2);
 
@@ -91,11 +91,11 @@ class PaymentForm
                         $sub = CustomerSubscription::with('subscription')
                             ->find($get('customer_subscription_id'));
 
-                        if (! $sub || ! $sub->subscription || $state === null) {
+                        if (! $sub || $state === null) {
                             return;
                         }
 
-                        $price = $sub->subscription->finalPrice();
+                        $price = $sub->finalPrice();
                         $half = round($price / 2, 2);
                         $amount = round((float) $state, 2);
 
@@ -109,11 +109,11 @@ class PaymentForm
                         $sub = CustomerSubscription::with('subscription')
                             ->find($get('customer_subscription_id'));
 
-                        if (! $sub || ! $sub->subscription) {
+                        if (! $sub) {
                             return null;
                         }
 
-                        $price = (float) $sub->subscription->price;
+                        $price = (float) $sub->finalPrice();
                         $half = round($price / 2, 2);
 
                         return "Allowed: 50% ({$half}) or full ({$price})";

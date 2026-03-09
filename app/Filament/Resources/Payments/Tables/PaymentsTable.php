@@ -35,26 +35,19 @@ class PaymentsTable
                     ->money('UZS')
                     ->sortable()
                     ->badge()
-                    ->color(fn ($record) =>
-                    $record->amount >= $record->customerSubscription?->subscription?->price
-                        ? 'success'
-                        : 'danger'
-                    ),
+                    ->color(fn ($record) => match ((string) $record->status) {
+                        'paid' => 'success',
+                        'partial' => 'warning',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    }),
 
-                TextColumn::make('remaining_amount')
+                TextColumn::make('remaining_debt')
                     ->label('Remaining')
                     ->money('UZS')
                     ->badge()
-                    ->state(function ($record) {
-                        $price = $record->customerSubscription?->subscription?->price ?? 0;
-
-                        return max(0, $price - $record->amount);
-                    })
-                    ->color(fn ($record) =>
-                    $record->amount >= $record->customerSubscription?->subscription?->price
-                        ? 'success'
-                        : 'warning'
-                    ),
+                    ->state(fn ($record) => (float) ($record->customerSubscription?->debt ?? 0))
+                    ->color(fn ($record) => ((float) ($record->customerSubscription?->debt ?? 0)) > 0 ? 'warning' : 'success'),
 
                 TextColumn::make('method')
                     ->searchable()
@@ -76,6 +69,7 @@ class PaymentsTable
                     ->dateTime()
                     ->sortable(),
             ])
+            ->defaultSort('id', 'desc')
             ->filters([
                 SelectFilter::make('status')
                     ->label('Status')

@@ -81,6 +81,7 @@ class CustomerSubscriptionsTable
                     })
                     ->formatStateUsing(fn ($state) => ucfirst((string) $state)),
             ])
+            ->defaultSort('id', 'desc')
             ->filters([
                 SelectFilter::make('status')
                     ->label('Status')

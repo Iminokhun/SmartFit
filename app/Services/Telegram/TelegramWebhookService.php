@@ -176,6 +176,7 @@ class TelegramWebhookService
             $customerSubscription = CustomerSubscription::query()->create([
                 'customer_id' => $customerId,
                 'subscription_id' => (int) $subscription->id,
+                'agreed_price' => $subscription->finalPrice(),
                 'start_date' => $startDate->toDateString(),
                 'end_date' => $endDate->toDateString(),
                 'remaining_visits' => $subscription->visits_limit === null ? null : (int) $subscription->visits_limit,

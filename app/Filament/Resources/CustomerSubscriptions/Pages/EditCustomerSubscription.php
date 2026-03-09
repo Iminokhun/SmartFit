@@ -4,6 +4,7 @@ namespace App\Filament\Resources\CustomerSubscriptions\Pages;
 
 use App\Filament\Resources\CustomerSubscriptions\CustomerSubscriptionResource;
 use App\Models\CustomerSubscription;
+use App\Models\Subscription;
 use Carbon\Carbon;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
@@ -26,6 +27,7 @@ class EditCustomerSubscription extends EditRecord
     protected function mutateFormDataBeforeSave(array $data): array
     {
         $this->ensureRepurchaseRule($data);
+        $this->applyAgreedPriceSnapshot($data);
 
         $status = $data['status'] ?? null;
         if (in_array($status, ['cancelled', 'frozen', 'pending'], true)) {
@@ -79,5 +81,27 @@ class EditCustomerSubscription extends EditRecord
                 'subscription_id' => 'You can add the same plan only when 1 visit is left.',
             ]);
         }
+    }
+
+    private function applyAgreedPriceSnapshot(array &$data): void
+    {
+        $subscriptionId = (int) ($data['subscription_id'] ?? 0);
+        if ($subscriptionId <= 0) {
+            return;
+        }
+
+        $subscriptionChanged = (int) $this->record->subscription_id !== $subscriptionId;
+        $hasAgreedPrice = array_key_exists('agreed_price', $data) && $data['agreed_price'] !== null;
+
+        if (! $subscriptionChanged && $hasAgreedPrice) {
+            return;
+        }
+
+        $subscription = Subscription::query()->find($subscriptionId);
+        if (! $subscription) {
+            return;
+        }
+
+        $data['agreed_price'] = $subscription->finalPrice();
     }
 }

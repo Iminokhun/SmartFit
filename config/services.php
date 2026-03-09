@@ -42,4 +42,10 @@ return [
         'provider_token' => env(('FREEDOMPAY_TOKEN')),
     ],
 
+    'telegram_staff' => [
+        'bot_token' => env('TELEGRAM_STAFF_BOT_TOKEN'),
+        'bot_username' => env('TELEGRAM_STAFF_BOT_USERNAME'),
+        'webhook_secret' => env('TELEGRAM_STAFF_WEBHOOK_SECRET'),
+    ],
+
 ];

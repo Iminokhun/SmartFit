@@ -11,6 +11,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use App\Models\Staff;
+use App\Models\TelegramStaffLink;
 
 
 class User extends Authenticatable implements FilamentUser
@@ -89,6 +90,11 @@ class User extends Authenticatable implements FilamentUser
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function telegramStaffLink()
+    {
+        return $this->hasOne(TelegramStaffLink::class);
     }
 
     private function hasRole(string ...$names): bool

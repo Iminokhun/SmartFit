@@ -5,11 +5,16 @@ namespace App\Filament\Resources\CustomerSubscriptions\Schemas;
 use App\Models\Subscription;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use App\Enums\PaymentMethod;
+use App\Rules\HalfOrFullPaymentAmountRule;
+
 
 class CustomerSubscriptionForm
 {
@@ -108,6 +113,54 @@ class CustomerSubscriptionForm
                         ])
                         ->default('active')
                         ->required(),
-                ]);
+
+                    Placeholder::make('payment_price_hint')
+                        ->label('Price info')
+                        ->content(fn (Get $get) => self::priceHint($get))
+                        ->dehydrated(false)
+                        ->visible(fn (string $operation) => $operation === 'create'),
+
+                    TextInput::make('payment_amount')
+                        ->label('Initial payment')
+                        ->numeric()
+                        ->required()
+                        ->rules([
+                            fn (Get $get) => new HalfOrFullPaymentAmountRule((int) ($get('subscription_id') ?? 0)),
+                        ]),
+
+                    Select::make('payment_method')
+                        ->label('Payment method')
+                        ->options(PaymentMethod::options())
+                        ->visible(fn (string $operation) => $operation === 'create')
+                        ->requiredWith('payment_amount'),
+
+                    Textarea::make('payment_description')
+                        ->label('Payment note')
+                        ->default('Initial payment from subscription create')
+                        ->visible(fn (string $operation) => $operation === 'create'),
+
+            ]);
+
+
     }
+
+    private static function priceHint(Get $get): string
+    {
+        $subscriptionId = (int) ($get('subscription_id') ?? 0);
+
+        if ($subscriptionId <= 0) {
+            return 'Select a subscription to see price.';
+        }
+
+        $subscription = Subscription::find($subscriptionId);
+        if (! $subscription) {
+            return 'Subscription not found.';
+        }
+
+        $full = round((float) $subscription->finalPrice(), 2);
+        $half = round($full / 2, 2);
+
+        return 'Full: ' . number_format($full, 2) . ' UZS | Half: ' . number_format($half, 2) . ' UZS';
+    }
+
 }
