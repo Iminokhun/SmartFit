@@ -25,6 +25,8 @@
     <div id="scan-card" class="card hidden">
         <h1 style="font-size:18px;">Ready to Scan</h1>
         <p id="staff-meta" class="staff-meta"></p>
+        <label for="schedule-select" style="font-size:12px;color:#94a3b8;display:block;margin-top:12px;">Schedule</label>
+        <select id="schedule-select" class="input"></select>
         <button id="btn-scan" class="btn">Open Scanner</button>
         <button id="btn-refresh" class="btn secondary">Refresh Status</button>
     </div>
@@ -56,6 +58,8 @@
     const btnRefresh = document.getElementById('btn-refresh');
     const emailInput = document.getElementById('staff-email');
     const passwordInput = document.getElementById('staff-password');
+    const scheduleSelect = document.getElementById('schedule-select');
+
 
     let lastQrPayload = null;
 
@@ -90,6 +94,36 @@
         return data;
     }
 
+    function getSelectedScheduleId() {
+        const value = scheduleSelect?.value || '';
+        return value ? Number(value) : null;
+    }
+
+    async function loadSchedules() {
+        if (!scheduleSelect) return;
+        scheduleSelect.innerHTML = '';
+        const initData = getInitData();
+        if (!initData) return;
+
+        try {
+            const data = await postJson('/telegram/staff/scan/schedules', { init_data: initData });
+            const list = data.schedules || [];
+
+            const optAny = document.createElement('option');
+            optAny.value = '';
+            optAny.textContent = 'Any schedule (auto)';
+            scheduleSelect.appendChild(optAny);
+
+            for (const item of list) {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = item.label;
+                scheduleSelect.appendChild(opt);
+            }
+        } catch (e) {
+            // ignore schedule load errors for now
+        }
+    }
     async function loadMe() {
         clearMsg();
         const initData = getInitData();
@@ -112,6 +146,7 @@
             scanCard.classList.remove('hidden');
             selectionCard.classList.add('hidden');
             staffMeta.textContent = `${data.staff?.name || 'Staff'} (${data.staff?.role || '-'})`;
+            await loadSchedules();
         } catch (e) {
             showMsg(e.message || 'Failed to load scanner state.', false);
         }
@@ -146,6 +181,7 @@
                 init_data: getInitData(),
                 qr_payload: lastQrPayload,
                 customer_subscription_id: customerSubscriptionId,
+                schedule_id: getSelectedScheduleId(),
             });
 
             selectionCard.classList.add('hidden');
@@ -182,6 +218,7 @@
             const data = await postJson('/telegram/staff/scan/resolve', {
                 init_data: getInitData(),
                 qr_payload: text,
+                schedule_id: getSelectedScheduleId(),
             });
 
             if (data.requires_selection) {
@@ -213,13 +250,12 @@
             return true;
         });
     }
+    btnLink?.addEventListener('click', linkStaff);
+    btnScan?.addEventListener('click', openScanner);
+    btnRefresh?.addEventListener('click', loadMe);
 
-    btnLink.addEventListener('click', linkStaff);
-    btnScan.addEventListener('click', openScanner);
-    btnRefresh.addEventListener('click', loadMe);
 
     loadMe();
 </script>
 </body>
 </html>
-

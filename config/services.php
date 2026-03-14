@@ -40,12 +40,14 @@ return [
         'bot_username' => env('TELEGRAM_BOT_USERNAME'),
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
         'provider_token' => env(('FREEDOMPAY_TOKEN')),
+        'public_url'     => env('TELEGRAM_PUBLIC_URL'),
     ],
 
     'telegram_staff' => [
         'bot_token' => env('TELEGRAM_STAFF_BOT_TOKEN'),
         'bot_username' => env('TELEGRAM_STAFF_BOT_USERNAME'),
         'webhook_secret' => env('TELEGRAM_STAFF_WEBHOOK_SECRET'),
+        'public_url'     => env('TELEGRAM_PUBLIC_URL'),
     ],
 
 ];

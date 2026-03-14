@@ -116,6 +116,24 @@ class ManageAttendance extends Page
         $monthStart = $currentDate->copy()->startOfMonth();
         $monthEnd = $currentDate->copy()->endOfMonth();
 
+        // Стартуем матрицу не раньше минимальной даты старта активных подписок.
+        $minStartDate = CustomerSubscription::query()
+            ->where('status', 'active')
+            ->whereDate('start_date', '<=', $monthEnd)
+            ->whereDate('end_date', '>=', $monthStart)
+            ->whereHas('subscription', function ($q) use ($schedule) {
+                $q->where('activity_id', $schedule->activity_id);
+            })
+            ->min('start_date');
+
+        $matrixStart = $monthStart->copy();
+        if ($minStartDate) {
+            $minStart = Carbon::parse($minStartDate);
+            if ($minStart->gt($matrixStart)) {
+                $matrixStart = $minStart;
+            }
+        }
+
         // Определяем дни недели, в которые проходит это занятие.
         $daysOfWeek = $schedule->days_of_week ?? [];
         $dayNameToCarbon = [
@@ -130,7 +148,7 @@ class ManageAttendance extends Page
 
         // Формируем список дат в выбранном месяце, когда есть это занятие.
         $dates = [];
-        $cursor = $monthStart->copy();
+        $cursor = $matrixStart->copy();
         while ($cursor->lte($monthEnd)) {
             $dayName = strtolower($cursor->englishDayOfWeek);
             if (in_array($dayName, $daysOfWeek, true)) {

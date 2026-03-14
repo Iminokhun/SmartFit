@@ -228,17 +228,48 @@ class TelegramMiniAppService
             ->first();
 
         if (! $active) {
+            $frozen = CustomerSubscription::query()
+                ->with('subscription')
+                ->where('customer_id', $customerId)
+                ->where('status', 'frozen')
+                ->orderBy('end_date')
+                ->first();
+
+            if ($frozen) {
+                return [
+                    'has_active' => false,
+                    'status' => 'frozen',
+                    'name' => $frozen->subscription?->name ?? 'Subscription',
+                    'end_date' => (string) $frozen->end_date,
+                    'days_left' => null,
+                    'debt' => (float) ($frozen->debt ?? 0),
+                    'payment_status' => (string) ($frozen->payment_status ?? 'unknown'),
+                ];
+            }
+
             return [
                 'has_active' => false,
+                'status' => 'none',
                 'name' => null,
                 'end_date' => null,
+                'days_left' => null,
+                'debt' => 0,
+                'payment_status' => null,
             ];
         }
 
+        $endDate = $active->end_date ? Carbon::parse($active->end_date) : null;
+        $daysLeft = $endDate ? (int) now()->diffInDays($endDate, false) : null;
+        $status = ($daysLeft !== null && $daysLeft <= 7) ? 'expiring' : 'active';
+
         return [
             'has_active' => true,
+            'status' => $status,
             'name' => $active->subscription?->name ?? 'Subscription',
             'end_date' => (string) $active->end_date,
+            'days_left' => $daysLeft,
+            'debt' => (float) ($active->debt ?? 0),
+            'payment_status' => (string) ($active->payment_status ?? 'unknown'),
         ];
     }
 
@@ -294,6 +325,7 @@ class TelegramMiniAppService
                 'end_date' => (string) $row->end_date,
                 'remaining_visits' => $remaining,
                 'payment_status' => (string) ($row->payment_status ?? 'unknown'),
+                'debt' => (float) ($row->debt ?? 0),
             ];
         })->values()->all();
     }
@@ -317,7 +349,7 @@ class TelegramMiniAppService
         }
 
         $schedules = Schedule::query()
-            ->with(['activity:id,name', 'hall:id,name'])
+            ->with(['activity:id,name', 'hall:id,name', 'staff:id,full_name'])
             ->whereIn('activity_id', $activityIds)
             ->get();
 
@@ -333,13 +365,16 @@ class TelegramMiniAppService
             ->values();
 
         if ($todayItems->isNotEmpty()) {
-            $items = $todayItems->map(function (Schedule $schedule) {
-                $start = Carbon::parse($schedule->start_time)->format('H:i');
-                $end = Carbon::parse($schedule->end_time)->format('H:i');
-                $activity = $schedule->activity?->name ?? 'Activity';
-                $hall = $schedule->hall?->name ?? '-';
+            $nowTime = now()->format('H:i:s');
+            $nextFound = false;
+            $items = $todayItems->map(function (Schedule $schedule) use ($nowTime, &$nextFound) {
+                $isPast = ((string) $schedule->end_time) < $nowTime;
+                $isNext = ! $isPast && ! $nextFound;
+                if ($isNext) {
+                    $nextFound = true;
+                }
 
-                return "{$start}-{$end} | {$activity} | Hall: {$hall}";
+                return $this->formatScheduleItem($schedule, null, true, $isPast, $isNext);
             })->all();
 
             return ['has_items' => true, 'items' => $items];
@@ -372,18 +407,25 @@ class TelegramMiniAppService
         }
 
         $items = $upcoming->map(function (array $row) {
-            /** @var Schedule $schedule */
-            $schedule = $row['schedule'];
-            $start = Carbon::parse($schedule->start_time)->format('H:i');
-            $end = Carbon::parse($schedule->end_time)->format('H:i');
-            $activity = $schedule->activity?->name ?? 'Activity';
-            $hall = $schedule->hall?->name ?? '-';
-            $day = $row['day_label'];
-
-            return "{$day} {$start}-{$end} | {$activity} | Hall: {$hall}";
+            return $this->formatScheduleItem($row['schedule'], $row['day_label'], false);
         })->all();
 
         return ['has_items' => true, 'items' => $items];
+    }
+
+    private function formatScheduleItem(Schedule $schedule, ?string $dayLabel, bool $isToday, bool $isPast = false, bool $isNext = false): array
+    {
+        return [
+            'time_from' => Carbon::parse($schedule->start_time)->format('H:i'),
+            'time_to' => Carbon::parse($schedule->end_time)->format('H:i'),
+            'activity' => $schedule->activity?->name ?? 'Activity',
+            'hall' => $schedule->hall?->name ?? null,
+            'trainer' => $schedule->staff?->full_name ?? null,
+            'day' => $isToday ? 'Today' : $dayLabel,
+            'is_today' => $isToday,
+            'is_past' => $isPast,
+            'is_next' => $isNext,
+        ];
     }
 
     private function normalizedDays(Schedule $schedule): array

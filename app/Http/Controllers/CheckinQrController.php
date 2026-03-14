@@ -19,6 +19,7 @@ class CheckinQrController extends Controller
 
         $data = $request->validate([
             'qr_payload' => ['required', 'string'],
+            'schedule_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $result = $checkinService->resolveOrConsume(
@@ -43,6 +44,7 @@ class CheckinQrController extends Controller
 
         $data = $request->validate([
             'qr_payload' => ['required', 'string'],
+            'schedule_id' => ['nullable', 'integer', 'min:1'],
             'customer_subscription_id' => ['required', 'integer', 'min:1'],
         ]);
 
@@ -50,6 +52,7 @@ class CheckinQrController extends Controller
             $data['qr_payload'],
             (int) $data['customer_subscription_id'],
             $request->user()?->id,
+            isset($data['schedule_id']) ? (int) $data['schedule_id'] : null,
         );
 
         $status = (int) ($result['status'] ?? 200);
@@ -73,4 +76,3 @@ class CheckinQrController extends Controller
         return in_array((int) $user->role_id, [1, 6], true);
     }
 }
-

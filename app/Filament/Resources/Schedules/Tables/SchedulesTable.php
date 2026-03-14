@@ -50,6 +50,7 @@ class SchedulesTable
                 TextColumn::make('max_participants')
                     ->label('Participants')
             ])
+            ->defaultSort('id', 'desc')
             ->filters([
                 SelectFilter::make('day')
                     ->label('Day')

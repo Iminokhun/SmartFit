@@ -56,6 +56,37 @@
         tg.expand();
     }
 
+    const haptic = tg?.HapticFeedback;
+
+    function hapticSelection() { haptic?.selectionChanged(); }
+    function hapticSuccess() { haptic?.notificationOccurred('success'); }
+    function hapticError() { haptic?.notificationOccurred('error'); }
+    function hapticMedium() { haptic?.impactOccurred('medium'); }
+
+    function tgAlert(text) {
+        if (tg?.showAlert) {
+            tg.showAlert(text);
+        } else {
+            alert(text);
+        }
+    }
+
+    function tgConfirm(text, callback) {
+        if (tg?.showConfirm) {
+            tg.showConfirm(text, callback);
+        } else {
+            callback(confirm(text));
+        }
+    }
+
+    // Show native BackButton
+    if (tg?.BackButton) {
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => {
+            window.location.href = '{{ route('telegram.mini-app.show') }}';
+        });
+    }
+
     const msg = document.getElementById('msg');
     const searchInput = document.getElementById('search');
     const activityFilter = document.getElementById('activity-filter');
@@ -89,51 +120,79 @@
         return num.toLocaleString('en-US');
     }
 
+    async function sendInvoice(btn, subscriptionId, planName, finalPrice) {
+        const initData = tg?.initData || '';
+        if (!initData) {
+            tgAlert('Open this page only from Telegram bot.');
+            hapticError();
+            return;
+        }
+
+        btn.disabled = true;
+        const oldText = btn.textContent;
+        btn.textContent = 'Sending...';
+
+        try {
+            const res = await fetch('/telegram/mini-app/purchase/invoice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    init_data: initData,
+                    subscription_id: subscriptionId,
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.ok) {
+                hapticError();
+                showMessage(data.message || 'Failed to send invoice.', false);
+                return;
+            }
+
+            hapticSuccess();
+            showMessage(data.message || 'Invoice sent to your Telegram chat.', true);
+        } catch (_) {
+            hapticError();
+            tgAlert('Network error while sending invoice.');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = oldText;
+        }
+    }
+
     function bindBuyButtons(scope = document) {
         scope.querySelectorAll('[data-buy-id]').forEach((btn) => {
-            btn.addEventListener('click', async () => {
+            btn.addEventListener('click', () => {
+                hapticMedium();
+
                 const initData = tg?.initData || '';
                 if (!initData) {
-                    showMessage('Open this page only from Telegram bot.', false);
+                    tgAlert('Open this page only from Telegram bot.');
+                    hapticError();
                     return;
                 }
 
                 const subscriptionId = Number(btn.dataset.buyId || 0);
+                const planName = btn.dataset.planName || 'this plan';
+                const finalPrice = btn.dataset.finalPrice || '0';
+
                 if (!subscriptionId) {
                     showMessage('Invalid subscription.', false);
+                    hapticError();
                     return;
                 }
 
-                btn.disabled = true;
-                const oldText = btn.textContent;
-                btn.textContent = 'Sending...';
-
-                try {
-                    const res = await fetch('/telegram/mini-app/purchase/invoice', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            init_data: initData,
-                            subscription_id: subscriptionId,
-                        }),
-                    });
-
-                    const data = await res.json();
-                    if (!res.ok || !data.ok) {
-                        showMessage(data.message || 'Failed to send invoice.', false);
-                        return;
+                tgConfirm(
+                    `Buy "${planName}" for ${formatMoney(finalPrice)} UZS?`,
+                    (confirmed) => {
+                        if (confirmed) {
+                            sendInvoice(btn, subscriptionId, planName, finalPrice);
+                        }
                     }
-
-                    showMessage(data.message || 'Invoice sent.', true);
-                } catch (_) {
-                    showMessage('Network error while sending invoice.', false);
-                } finally {
-                    btn.disabled = false;
-                    btn.textContent = oldText;
-                }
+                );
             });
         });
     }
@@ -164,7 +223,13 @@
                             ${discount > 0 ? `<div class="plan-price-old">UZS ${formatMoney(plan.price)}</div>` : ''}
                             <div class="plan-price-main">${formatMoney(plan.final_price)} <span class="plan-price-currency">UZS</span></div>
                         </div>
-                        <button type="button" class="plan-cta-btn" data-buy-id="${plan.id}">Choose</button>
+                        <button
+                            type="button"
+                            class="plan-cta-btn"
+                            data-buy-id="${plan.id}"
+                            data-plan-name="${escapeHtml(plan.name)}"
+                            data-final-price="${escapeHtml(String(plan.final_price))}"
+                        >Choose</button>
                     </div>
                 </div>
             `;
@@ -236,7 +301,8 @@
     async function loadCatalog() {
         const initData = tg?.initData || '';
         if (!initData) {
-            showMessage('Open this page only from Telegram bot.', false);
+            tgAlert('Open this page only from Telegram bot.');
+            hapticError();
             plansEmpty.textContent = 'No data';
             return;
         }
@@ -253,6 +319,7 @@
         const data = await res.json();
         if (!res.ok || !data.ok) {
             showMessage(data.message || 'Failed to load subscriptions.', false);
+            hapticError();
             plansEmpty.textContent = 'No data';
             return;
         }
@@ -262,17 +329,28 @@
         applyFilters();
     }
 
-    searchInput.addEventListener('input', applyFilters);
-    activityFilter.addEventListener('change', applyFilters);
-    visitsFilter.addEventListener('change', applyFilters);
+    searchInput.addEventListener('input', () => {
+        hapticSelection();
+        applyFilters();
+    });
+    activityFilter.addEventListener('change', () => {
+        hapticSelection();
+        applyFilters();
+    });
+    visitsFilter.addEventListener('change', () => {
+        hapticSelection();
+        applyFilters();
+    });
     toggleAllPlansBtn.addEventListener('click', () => {
+        hapticSelection();
         allPlansVisible = !allPlansVisible;
         allList.classList.toggle('hidden', !allPlansVisible);
         toggleAllPlansBtn.textContent = allPlansVisible ? 'Hide all plans' : 'Show all plans';
     });
 
     loadCatalog().catch(() => {
-        showMessage('Failed to initialize Mini App.', false);
+        hapticError();
+        tgAlert('Failed to initialize Mini App.');
         plansEmpty.textContent = 'No data';
     });
 </script>

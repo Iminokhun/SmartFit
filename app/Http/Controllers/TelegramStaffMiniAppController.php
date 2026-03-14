@@ -144,6 +144,7 @@ class TelegramStaffMiniAppController extends Controller
         $data = $request->validate([
             'init_data' => ['required', 'string'],
             'qr_payload' => ['required', 'string'],
+            'schedule_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $user = $this->resolveScannerUser($data['init_data']);
@@ -154,19 +155,25 @@ class TelegramStaffMiniAppController extends Controller
             ], 403);
         }
 
-        $result = $checkinService->resolveOrConsume($data['qr_payload'], (int) $user->id);
+        $result = $checkinService->resolveOrConsume(
+            $data['qr_payload'],
+            (int) $user->id,
+            $data['schedule_id'] ?? null
+        );
+
         $status = (int) ($result['status'] ?? 200);
         unset($result['status']);
 
         return response()->json($result, $status);
+        \Log::info('staff.scan.resolve.payload', $request->all());
     }
-
     public function consume(Request $request, QrCheckinService $checkinService): JsonResponse
     {
         $data = $request->validate([
             'init_data' => ['required', 'string'],
             'qr_payload' => ['required', 'string'],
             'customer_subscription_id' => ['required', 'integer', 'min:1'],
+            'schedule_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $user = $this->resolveScannerUser($data['init_data']);
@@ -180,12 +187,14 @@ class TelegramStaffMiniAppController extends Controller
         $result = $checkinService->consume(
             $data['qr_payload'],
             (int) $data['customer_subscription_id'],
-            (int) $user->id
+            (int) $user->id,
+            $data['schedule_id'] ?? null
         );
         $status = (int) ($result['status'] ?? 200);
         unset($result['status']);
 
         return response()->json($result, $status);
+        \Log::info('staff.scan.consume.payload', $request->all());
     }
 
     private function resolveScannerUser(string $initData): ?User

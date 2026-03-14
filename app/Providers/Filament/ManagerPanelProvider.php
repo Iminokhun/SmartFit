@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Resources\CustomerCheckins\CustomerCheckinResource;
 use App\Http\Middleware\AuthenticateFilamentPanel;
 use App\Http\Middleware\ManagerLoginRateLimit;
 use App\Filament\Pages\ManagerPersonal;
@@ -64,6 +65,7 @@ class ManagerPanelProvider extends PanelProvider
                 InventoryMovementResource::class,
                 AssetEventResource::class,
                 ExpenseResource::class,
+                CustomerCheckinResource::class,
             ])
             ->pages([
                 Dashboard::class,

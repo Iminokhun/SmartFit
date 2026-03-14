@@ -14,8 +14,22 @@ class Subscription extends Model
         'visits_limit',
         'activity_id',
         'discount',
+        'allowed_weekdays',
+        'time_from',
+        'time_to',
+        'max_checkins_per_day',
+        'freeze_days_limit',
+        'hall_id',
+        'trainer_id'
     ];
 
+    protected $casts = [
+        'allowed_weekdays' => 'array',
+        'time_from' => 'datetime:H:i:s',
+        'time_to' => 'datetime:H:i:s',
+        'max_checkins_per_day' => 'integer',
+        'freeze_days_limit' => 'integer',
+    ];
 
     public function customers()
     {
@@ -25,6 +39,21 @@ class Subscription extends Model
     public function activity()
     {
         return $this->belongsTo(Activity::class);
+    }
+
+    public function trainer()
+    {
+        return $this->belongsTo(Staff::class, 'trainer_id');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
+
+    public function hall()
+    {
+        return $this->belongsTo(\App\Models\Hall::class);
     }
 
     public function finalPrice(): float
@@ -87,3 +116,4 @@ class Subscription extends Model
         return $this->capacityUsed() >= $limit ? 'danger' : 'success';
     }
 }
+

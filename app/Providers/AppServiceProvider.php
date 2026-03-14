@@ -61,7 +61,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Subscription::class, AdminDeleteCrudPolicy::class);
         Gate::policy(Visit::class, AdminDeleteCrudPolicy::class);
 
-        URL::forceScheme('https');
 
         Payment::observe(PaymentObserver::class);
         InventoryMovement::observe(InventoryMovementObserver::class);

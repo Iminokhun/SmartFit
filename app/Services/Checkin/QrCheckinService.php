@@ -5,6 +5,8 @@ namespace App\Services\Checkin;
 use App\Models\CheckinToken;
 use App\Models\CustomerCheckin;
 use App\Models\CustomerSubscription;
+use App\Models\Schedule;
+use App\Models\Visit;
 use App\Services\Subscriptions\CustomerSubscriptionLifecycleService;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
@@ -41,7 +43,7 @@ class QrCheckinService
         ];
     }
 
-    public function resolveOrConsume(string $rawPayload, ?int $actorUserId = null): array
+    public function resolveOrConsume(string $rawPayload, ?int $actorUserId = null, ?int $scheduleId = null): array
     {
         $token = $this->extractToken($rawPayload);
         if (! $token) {
@@ -71,7 +73,7 @@ class QrCheckinService
         }
 
         if ($activeSubscriptions->count() === 1) {
-            $result = $this->consume($rawPayload, (int) $activeSubscriptions->first()->id, $actorUserId);
+            $result = $this->consume($rawPayload, (int) $activeSubscriptions->first()->id, $actorUserId, $scheduleId);
             if (($result['ok'] ?? false) === true) {
                 $result['auto_consumed'] = true;
             }
@@ -91,7 +93,7 @@ class QrCheckinService
         ];
     }
 
-    public function consume(string $rawPayload, int $customerSubscriptionId, ?int $actorUserId = null): array
+    public function consume(string $rawPayload, int $customerSubscriptionId, ?int $actorUserId = null, ?int $scheduleId = null): array
     {
         $token = $this->extractToken($rawPayload);
         if (! $token) {
@@ -102,7 +104,7 @@ class QrCheckinService
             ];
         }
 
-        return DB::transaction(function () use ($token, $customerSubscriptionId, $actorUserId): array {
+        return DB::transaction(function () use ($token, $customerSubscriptionId, $actorUserId, $scheduleId): array {
             $tokenRow = CheckinToken::query()
                 ->where('token_hash', hash('sha256', $token))
                 ->lockForUpdate()
@@ -133,7 +135,7 @@ class QrCheckinService
             }
 
             $subscription = CustomerSubscription::query()
-                ->with('subscription:id,name,activity_id')
+                ->with('subscription:id,name,activity_id,allowed_weekdays,time_from,time_to,max_checkins_per_day')
                 ->lockForUpdate()
                 ->where('id', $customerSubscriptionId)
                 ->where('customer_id', (int) $tokenRow->customer_id)
@@ -165,13 +167,118 @@ class QrCheckinService
                 ];
             }
 
+            $now = Carbon::now();
+            $isoDay = (int) $now->isoWeekday(); // 1..7
+
+            // 1) Weekday rule
+            $allowedWeekdays = $subscription->subscription?->allowed_weekdays;
+            if (is_array($allowedWeekdays) && count($allowedWeekdays) > 0) {
+                $allowedWeekdays = array_map('intval', $allowedWeekdays);
+
+                if (! in_array($isoDay, $allowedWeekdays, true)) {
+                    return [
+                        'ok' => false,
+                        'status' => 422,
+                        'message' => 'This subscription is not allowed on this weekday.',
+                    ];
+                }
+            }
+
+            $timeFrom = $subscription->subscription?->time_from;
+            $timeTo = $subscription->subscription?->time_to;
+
+            if ($timeFrom && $timeTo) {
+                $currentTime = $now->format('H:i:s');
+                $from = Carbon::parse($timeFrom)->format('H:i:s');
+                $to = Carbon::parse($timeTo)->format('H:i:s');
+
+                if ($currentTime < $from || $currentTime > $to) {
+                    return [
+                        'ok' => false,
+                        'status' => 422,
+                        'message' => 'Check-in is outside allowed time window.',
+                    ];
+                }
+            }
+
+            // 3) Max check-ins per day rule
+            $maxPerDay = $subscription->subscription?->max_checkins_per_day;
+            if ($maxPerDay !== null) {
+                $todayCount = CustomerCheckin::query()
+                    ->where('customer_subscription_id', (int) $subscription->id)
+                    ->whereDate('checked_in_at', $today)
+                    ->count();
+
+                if ($todayCount >= (int) $maxPerDay) {
+                    return [
+                        'ok' => false,
+                        'status' => 422,
+                        'message' => 'Daily check-in limit reached for this subscription.',
+                    ];
+                }
+            }
+
+            $scheduleId = $scheduleId ? (int) $scheduleId : null;
+            if ($scheduleId) {
+                $schedule = Schedule::query()->where('id', $scheduleId)->first();
+                if (! $schedule) {
+                    return [
+                        'ok' => false,
+                        'status' => 422,
+                        'message' => 'Selected schedule is not available.',
+                    ];
+                }
+
+                $subscriptionActivityId = (int) ($subscription->subscription?->activity_id ?? 0);
+                if ($subscriptionActivityId > 0 && (int) $schedule->activity_id !== $subscriptionActivityId) {
+                    return [
+                        'ok' => false,
+                        'status' => 422,
+                        'message' => 'Selected schedule does not match subscription activity.',
+                    ];
+                }
+            }
+
+
+            $alreadyCheckedInToday = CustomerCheckin::query()
+                ->where('customer_subscription_id', (int) $subscription->id)
+                ->whereDate('checked_in_at', $today)
+                ->exists();
+
+            if ($alreadyCheckedInToday) {
+                return [
+                    'ok' => false,
+                    'status' => 409,
+                    'message' => 'This subscription is already checked in today.',
+                ];
+            }
+
+            // Auto-detect schedule from subscription if not explicitly provided
+            $resolvedSchedule = $scheduleId
+                ? Schedule::query()->find($scheduleId)
+                : Schedule::query()->where('subscription_id', $subscription->subscription_id)->first();
+
+            $resolvedScheduleId = $resolvedSchedule?->id;
+
             $checkin = CustomerCheckin::query()->create([
                 'customer_id' => (int) $subscription->customer_id,
                 'customer_subscription_id' => (int) $subscription->id,
                 'checkin_token_id' => (int) $tokenRow->id,
                 'checked_in_by_user_id' => $actorUserId,
+                'schedule_id' => $resolvedScheduleId,
                 'checked_in_at' => now(),
             ]);
+
+            // Create a Visit record so ManageAttendance reflects the QR check-in
+            if ($resolvedScheduleId) {
+                Visit::query()->create([
+                    'customer_id' => (int) $subscription->customer_id,
+                    'schedule_id' => $resolvedScheduleId,
+                    'visited_at'  => now(),
+                    'status'      => 'visited',
+                    'trainer_id'  => $resolvedSchedule?->trainer_id,
+                ]);
+            }
 
             $tokenRow->used_at = now();
             $tokenRow->save();
@@ -198,7 +305,7 @@ class QrCheckinService
         $today = $asOf->toDateString();
 
         return CustomerSubscription::query()
-            ->with('subscription:id,name,activity_id')
+            ->with('subscription:id,name,activity_id,allowed_weekdays,time_from,time_to,max_checkins_per_day')
             ->where('customer_id', $customerId)
             ->where('status', 'active')
             ->whereDate('start_date', '<=', $today)
@@ -276,4 +383,7 @@ class QrCheckinService
         return $writer->writeString($payload);
     }
 }
+
+
+
 

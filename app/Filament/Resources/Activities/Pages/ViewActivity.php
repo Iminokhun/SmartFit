@@ -19,7 +19,7 @@ class ViewActivity extends ViewRecord
         return [
             Action::make('back')
                 ->label('Back')
-                ->url(InventoryMovementResource::getUrl('index'))
+                ->url(ActivityResource::getUrl('index'))
                 ->color('gray')
                 ->icon('heroicon-o-arrow-left'),
             EditAction::make(),
