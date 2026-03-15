@@ -330,6 +330,72 @@ class TelegramMiniAppService
         })->values()->all();
     }
 
+    public function subscriptionsDetail(int $customerId): array
+    {
+        $rows = CustomerSubscription::query()
+            ->with([
+                'subscription:id,name,activity_id,hall_id,trainer_id,allowed_weekdays,time_from,time_to,visits_limit',
+                'subscription.activity:id,name',
+                'subscription.hall:id,name',
+                'subscription.trainer:id,full_name',
+            ])
+            ->where('customer_id', $customerId)
+            ->whereIn('status', ['active', 'pending', 'frozen'])
+            ->orderByRaw("CASE status WHEN 'active' THEN 1 WHEN 'pending' THEN 2 WHEN 'frozen' THEN 3 ELSE 4 END")
+            ->orderBy('end_date')
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return [];
+        }
+
+        $isoMap = [
+            'monday' => 1, 'tuesday' => 2, 'wednesday' => 3, 'thursday' => 4,
+            'friday' => 5, 'saturday' => 6, 'sunday' => 7,
+        ];
+
+        return $rows->map(function (CustomerSubscription $row) use ($isoMap) {
+            $sub = $row->subscription;
+            $rawDays = is_array($sub?->allowed_weekdays) ? $sub->allowed_weekdays : [];
+
+            // Normalize to ISO day numbers 1(Mon)–7(Sun)
+            $weekdays = collect($rawDays)
+                ->map(function ($d) use ($isoMap) {
+                    if (is_numeric($d)) {
+                        return (int) $d;
+                    }
+
+                    return $isoMap[strtolower(trim((string) $d))] ?? null;
+                })
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
+
+            return [
+                'id' => (int) $row->id,
+                'name' => $sub?->name ?? 'Subscription',
+                'status' => (string) $row->status,
+                'start_date' => (string) $row->start_date,
+                'end_date' => (string) $row->end_date,
+                'remaining_visits' => $row->remaining_visits === null ? null : (int) $row->remaining_visits,
+                'total_visits' => $sub?->visits_limit === null ? null : (int) $sub->visits_limit,
+                'is_unlimited' => $row->remaining_visits === null,
+                'agreed_price' => (float) ($row->agreed_price ?? 0),
+                'paid_amount' => (float) ($row->paid_amount ?? 0),
+                'debt' => (float) ($row->debt ?? 0),
+                'payment_status' => (string) ($row->payment_status ?? 'unknown'),
+                'activity' => $sub?->activity?->name ?? null,
+                'hall' => $sub?->hall?->name ?? null,
+                'trainer' => $sub?->trainer?->full_name ?? null,
+                'weekdays' => $weekdays, // array of ISO ints 1-7
+                'time_from' => $sub?->time_from ? Carbon::parse($sub->time_from)->format('H:i') : null,
+                'time_to' => $sub?->time_to ? Carbon::parse($sub->time_to)->format('H:i') : null,
+            ];
+        })->values()->all();
+    }
+
     private function scheduleSummary(int $customerId): array
     {
         $activityIds = CustomerSubscription::query()

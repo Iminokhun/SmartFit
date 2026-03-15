@@ -732,3 +732,267 @@ button {
     padding: 8px 10px;
     font-size: 12px;
 }
+
+/* ---- My Subscriptions page ---- */
+
+/* Date & visits progress */
+.sub-progress-wrap {
+    width: 100%;
+    height: 6px;
+    background: var(--tg-theme-secondary-bg-color, #f1f5f9);
+    border-radius: 999px;
+    overflow: hidden;
+}
+.sub-progress-fill {
+    height: 100%;
+    background: var(--tg-theme-link-color, #2563eb);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+.sub-progress-fill.warn { background: #f59e0b; }
+
+.days-left-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.badge-ok      { background: #dcfce7; color: #166534; }
+.badge-warn    { background: #fef9c3; color: #92400e; }
+.badge-expired { background: #f1f5f9; color: #64748b; }
+
+/* Unlimited visits */
+.visits-unlimited {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.visits-inf {
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--tg-theme-link-color, #2563eb);
+    line-height: 1;
+}
+.visits-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--tg-theme-text-color, #0f172a);
+}
+.visits-sub {
+    font-size: 12px;
+    color: var(--tg-theme-hint-color, #64748b);
+    margin-top: 2px;
+}
+
+/* Detail rows with icons */
+.sub-info-card { background: var(--tg-theme-secondary-bg-color, #f8fafc); }
+.sub-detail-list { display: grid; gap: 12px; }
+.sub-detail-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.sub-detail-icon {
+    font-size: 17px;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    background: var(--tg-theme-bg-color, #fff);
+    border-radius: 8px;
+}
+.sub-detail-val  { font-size: 14px; font-weight: 700; color: var(--tg-theme-text-color, #0f172a); }
+
+/* Week calendar */
+.week-calendar {
+    display: flex;
+    gap: 5px;
+}
+.week-day {
+    flex: 1;
+    text-align: center;
+    padding: 9px 2px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+.week-day--on {
+    background: var(--tg-theme-link-color, #2563eb);
+    color: #fff;
+}
+.week-day--off {
+    background: var(--tg-theme-secondary-bg-color, #f1f5f9);
+    color: var(--tg-theme-hint-color, #94a3b8);
+    opacity: 0.45;
+}
+.week-every-day {
+    display: inline-block;
+    background: var(--tg-theme-link-color, #2563eb);
+    color: #fff;
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* Payment blocks */
+.payment-paid {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
+    border-radius: 16px;
+    padding: 14px 16px;
+}
+.payment-paid-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background: #22c55e;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 900;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+.payment-paid-label  { font-size: 12px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.05em; }
+.payment-paid-amount { font-size: 16px; font-weight: 800; color: #14532d; margin-top: 2px; }
+
+.payment-debt-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+.payment-debt-label  { font-size: 12px; font-weight: 700; color: #991b1b; text-transform: uppercase; letter-spacing: 0.05em; }
+.payment-debt-amount { font-size: 16px; font-weight: 800; color: #7f1d1d; margin-top: 2px; }
+.payment-pay-btn {
+    flex-shrink: 0;
+    background: #ef4444;
+    color: #fff;
+    border: 0;
+    border-radius: 10px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    width: auto;
+    margin-top: 0;
+    height: auto;
+}
+.sub-select {
+    width: 100%;
+    box-sizing: border-box;
+    height: 46px;
+    border: 1px solid var(--tg-theme-hint-color, #cbd5e1);
+    border-radius: 12px;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--tg-theme-bg-color, #fff);
+    color: var(--tg-theme-text-color, #0f172a);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+.sub-status-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+}
+
+.sub-status-banner.banner-active  { background: #dcfce7; border: 1px solid #bbf7d0; }
+.sub-status-banner.banner-pending { background: #fefce8; border: 1px solid #fde68a; }
+.sub-status-banner.banner-frozen  { background: #eff6ff; border: 1px solid #bfdbfe; }
+.sub-status-banner.banner-expired { background: #f1f5f9; border: 1px solid #e2e8f0; }
+
+.sub-status-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+    font-weight: 900;
+    flex-shrink: 0;
+}
+
+.banner-active  .sub-status-icon { background: #22c55e; color: #fff; }
+.banner-pending .sub-status-icon { background: #f59e0b; color: #fff; }
+.banner-frozen  .sub-status-icon { background: #3b82f6; color: #fff; }
+.banner-expired .sub-status-icon { background: #94a3b8; color: #fff; }
+
+.sub-status-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.banner-active  .sub-status-label { color: #166534; }
+.banner-pending .sub-status-label { color: #92400e; }
+.banner-frozen  .sub-status-label { color: #1e40af; }
+.banner-expired .sub-status-label { color: #475569; }
+
+.sub-status-name {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--tg-theme-text-color, #0f172a);
+    margin-top: 2px;
+}
+
+.sub-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 10px;
+}
+
+.sub-info-label {
+    font-size: 11px;
+    color: var(--tg-theme-hint-color, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 3px;
+}
+
+.sub-info-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--tg-theme-text-color, #0f172a);
+}
+
+.sub-paid { color: #16a34a; }
+.sub-debt { color: #dc2626; }
+
+.sub-payment-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 10px;
+}
+
+.sub-weekdays {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.sub-time-range {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--tg-theme-link-color, #1d4ed8);
+}

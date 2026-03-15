@@ -76,7 +76,7 @@
         </div>
 
         <div class="quick-actions">
-            <button type="button" id="btn-my-subscriptions" class="qa-btn">My subscriptions</button>
+            <a href="{{ route('telegram.mini-app.my-subscriptions') }}" class="qa-btn" style="display:grid;place-items:center;text-decoration:none;" id="btn-my-subscriptions">My subscriptions</a>
             <a href="{{ route('telegram.mini-app.subscriptions') }}" class="qa-btn" style="display:grid;place-items:center;text-decoration:none;">Subscription</a>
             <button type="button" id="btn-show-qr" class="qa-btn">My QR</button>
         </div>
@@ -166,7 +166,6 @@
     const scheduleEmpty = document.getElementById('schedule-empty');
     const scheduleList = document.getElementById('schedule-list');
     const scheduleLabel = document.getElementById('schedule-label');
-    const btnMySubscriptions = document.getElementById('btn-my-subscriptions');
     const btnShowQr = document.getElementById('btn-show-qr');
     const subscriptionsCard = document.getElementById('subscriptions-card');
     const subscriptionsEmpty = document.getElementById('subscriptions-empty');
@@ -579,16 +578,6 @@
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         handleFormSubmit();
-    });
-
-    btnMySubscriptions.addEventListener('click', () => {
-        hapticSelection();
-        const isHidden = subscriptionsCard.classList.contains('hidden');
-        subscriptionsCard.classList.toggle('hidden', !isHidden);
-        btnMySubscriptions.classList.toggle('is-active', isHidden);
-        if (isHidden) {
-            renderActiveSubscriptions(currentActiveSubscriptions);
-        }
     });
 
     btnShowQr.addEventListener('click', () => {
