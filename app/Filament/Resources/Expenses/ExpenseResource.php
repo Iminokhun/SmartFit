@@ -33,6 +33,13 @@ class ExpenseResource extends Resource
         return ExpensesTable::configure($table);
     }
 
+    public static function getWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\Expenses\Widgets\ExpenseQuickStats::class,
+        ];
+    }
+
     public static function getRelations(): array
     {
         return [

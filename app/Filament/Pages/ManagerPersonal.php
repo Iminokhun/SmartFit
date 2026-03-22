@@ -16,6 +16,11 @@ class ManagerPersonal extends Page
 
     protected string $view = 'filament.pages.manager-personal';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return \Filament\Facades\Filament::getCurrentPanel()?->getId() !== 'admin';
+    }
+
     public function getProfileSummaryProperty(): array
     {
         $user = auth()->user();

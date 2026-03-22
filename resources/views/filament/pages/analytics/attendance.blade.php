@@ -1,13 +1,5 @@
 <x-filament::page>
     @php
-        $cards = [
-            ['label' => 'Total Visits', 'value' => $metrics['totalVisits'], 'type' => 'count'],
-            ['label' => 'Attendance Rate', 'value' => $metrics['attendanceRate'], 'type' => 'percent'],
-            ['label' => 'Missed Rate', 'value' => $metrics['missedRate'], 'type' => 'percent'],
-            ['label' => 'Cancelled Rate', 'value' => $metrics['cancelledRate'], 'type' => 'percent'],
-            ['label' => 'No-show Count', 'value' => $metrics['noShowCount'], 'type' => 'count'],
-        ];
-
         $formatDate = fn ($value) => \Carbon\Carbon::parse($value)->format('d.m.Y');
         $fillRateColor = function (float $fillRate): string {
             if ($fillRate >= 75) {
@@ -23,124 +15,138 @@
     @endphp
 
     <div class="analytics-subscriptions space-y-6">
-        <x-filament::section heading="Filters" class="analytics-panel analytics-filters">
-            <div class="analytics-grid analytics-grid--2">
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">Period</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="period">
-                            @foreach ($periodOptions as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">From</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input type="date" wire:model.live="from" :disabled="$period !== 'range'" />
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">Until</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input type="date" wire:model.live="until" :disabled="$period !== 'range'" />
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">Trainer</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="trainerId">
-                            <option value="">All</option>
-                            @foreach ($trainers as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">Hall</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="hallId">
-                            <option value="">All</option>
-                            @foreach ($halls as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">Activity</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="activityId">
-                            <option value="">All</option>
-                            @foreach ($activities as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">Status</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="status">
-                            <option value="">All</option>
-                            @foreach ($statusOptions as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">Day of week</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="dayOfWeek">
-                            <option value="">All</option>
-                            @foreach ($dayOptions as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-            </div>
-
-            <div class="analytics-note mt-3 text-xs text-gray-500">
-                Range: {{ $formatDate($from) }} - {{ $formatDate($until) }}
-            </div>
+        <x-filament::section
+            heading="Filters"
+            icon="heroicon-o-funnel"
+            :description="$formatDate($from) . ' — ' . $formatDate($until)"
+            collapsible
+            collapsed
+            class="analytics-panel analytics-filters relative z-20 overflow-visible"
+        >
+            {{ $this->form }}
         </x-filament::section>
 
         <x-filament::section heading="KPI" class="analytics-panel analytics-kpi">
-            <div class="analytics-grid analytics-grid--2">
+            <div class="analytics-grid analytics-grid--2 analytics-grid--5">
                 @foreach ($cards as $card)
-                    <div class="analytics-kpi-card rounded-xl p-4">
-                        <div class="analytics-kpi-label text-xs uppercase tracking-wide text-gray-500">{{ $card['label'] }}</div>
-                        <div class="analytics-kpi-value mt-2 text-2xl font-semibold text-gray-900">
-                            @if ($card['type'] === 'percent')
-                                {{ number_format((float) $card['value'], 1) }}%
-                            @else
-                                {{ number_format((int) $card['value']) }}
-                            @endif
+                    @php
+                        $isGood = match($card['sentiment']) {
+                            'positive' => $card['direction'] === 'up',
+                            'negative' => $card['direction'] === 'down',
+                            default    => true,
+                        };
+                        $accentMod = 'analytics-kpi-accent--' . $card['sentiment'];
+                        $badgeMod  = $isGood ? 'analytics-kpi-badge--good' : 'analytics-kpi-badge--bad';
+                    @endphp
+                    <div class="analytics-kpi-card">
+                        <div class="analytics-kpi-accent {{ $accentMod }}"></div>
+                        <div>
+                            <p class="analytics-kpi-label">{{ $card['label'] }}</p>
+                            <p class="analytics-kpi-value">
+                                {{ $card['value'] }}@if(!empty($card['suffix']))<span class="analytics-kpi-value-suffix">{{ $card['suffix'] }}</span>@endif
+                            </p>
                         </div>
+                        @if(!empty($card['delta']))
+                            <div class="analytics-kpi-delta-row">
+                                <span class="analytics-kpi-badge {{ $badgeMod }}">
+                                    {{ $card['direction'] === 'up' ? '↑' : '↓' }} {{ $card['delta'] }}
+                                </span>
+                                <span class="analytics-kpi-delta-label">{{ $card['deltaLabel'] }}</span>
+                            </div>
+                        @endif
                     </div>
                 @endforeach
             </div>
         </x-filament::section>
 
         @if ($hasData)
+            <div class="analytics-grid analytics-grid--2">
+                <x-filament::section class="analytics-panel">
+                    <div class="trainer-section-header">
+                        <div class="trainer-section-left">
+                            <p class="trainer-section-eyebrow">Performance</p>
+                            <h3 class="trainer-section-title">Top Performing Trainers</h3>
+                        </div>
+                        <span class="trainer-section-badge trainer-section-badge--emerald">High Fill Rate</span>
+                    </div>
+                    <div class="trainer-rows">
+                        @forelse ($topTrainers as $row)
+                            @php
+                                $parts    = explode(' ', trim($row->trainer_name));
+                                $initials = strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
+                            @endphp
+                            <div class="trainer-row">
+                                <div class="trainer-row-left">
+                                    <div class="trainer-avatar trainer-avatar--emerald">{{ $initials }}</div>
+                                    <div>
+                                        <p class="trainer-name">{{ $row->trainer_name }}</p>
+                                        <div class="trainer-meta">
+                                            <span><span class="trainer-meta-val">{{ number_format((int) $row->sessions_count) }}</span> Sessions</span>
+                                            <span class="trainer-meta-dot"></span>
+                                            <span><span class="trainer-meta-val">{{ number_format((int) $row->total_visited) }}</span> Visits</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="trainer-row-right">
+                                    <span class="trainer-fill-rate">{{ number_format((float) $row->fill_rate, 1) }}<span class="trainer-fill-rate-suffix">%</span></span>
+                                    <div class="trainer-bar-track">
+                                        <div class="trainer-bar-fill trainer-bar-fill--emerald" style="width: {{ min((float) $row->fill_rate, 100) }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="trainer-empty">No trainer data in selected period</div>
+                        @endforelse
+                    </div>
+                </x-filament::section>
+
+                <x-filament::section class="analytics-panel">
+                    <div class="trainer-section-header">
+                        <div class="trainer-section-left">
+                            <p class="trainer-section-eyebrow">Optimization</p>
+                            <h3 class="trainer-section-title">Trainers Needing Attention</h3>
+                        </div>
+                        <span class="trainer-section-badge trainer-section-badge--rose">Low Fill Rate</span>
+                    </div>
+                    <div class="trainer-rows">
+                        @forelse ($lowestTrainers as $row)
+                            @php
+                                $parts    = explode(' ', trim($row->trainer_name));
+                                $initials = strtoupper(substr($parts[0], 0, 1) . (isset($parts[1]) ? substr($parts[1], 0, 1) : ''));
+                            @endphp
+                            <div class="trainer-row">
+                                <div class="trainer-row-left">
+                                    <div class="trainer-avatar trainer-avatar--rose">{{ $initials }}</div>
+                                    <div>
+                                        <p class="trainer-name">{{ $row->trainer_name }}</p>
+                                        <div class="trainer-meta">
+                                            <span><span class="trainer-meta-val">{{ number_format((int) $row->sessions_count) }}</span> Sessions</span>
+                                            <span class="trainer-meta-dot"></span>
+                                            <span><span class="trainer-meta-val">{{ number_format((int) $row->total_visited) }}</span> Visits</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="trainer-row-right">
+                                    <span class="trainer-fill-rate">{{ number_format((float) $row->fill_rate, 1) }}<span class="trainer-fill-rate-suffix">%</span></span>
+                                    <div class="trainer-bar-track">
+                                        <div class="trainer-bar-fill trainer-bar-fill--rose" style="width: {{ min((float) $row->fill_rate, 100) }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="trainer-empty">No trainer data in selected period</div>
+                        @endforelse
+                    </div>
+                </x-filament::section>
+            </div>
+
             <div class="analytics-charts grid grid-cols-1 gap-6 xl:grid-cols-2">
                 <x-filament::section heading="Attendance Comparison" class="analytics-panel analytics-chart">
                     <div class="analytics-note mb-3 text-xs text-gray-500">
                         Grouped bars make daily visited, missed, and cancelled values easier to compare.
                     </div>
                     <div class="analytics-chart-wrap">
-                        @livewire('App\\Filament\\Widgets\\Analytics\\AttendanceVisitsTrendChart', [
+                        @livewire(\App\Filament\Widgets\Analytics\AttendanceVisitsTrendChart::class, [
                             'from' => $from,
                             'until' => $until,
                             'trainerId' => $trainerId,
@@ -148,7 +154,7 @@
                             'activityId' => $activityId,
                             'status' => $status,
                             'dayOfWeek' => $dayOfWeek,
-                        ], key('attendance-trend-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . ($trainerId ?? 'all') . '-' . ($hallId ?? 'all') . '-' . ($activityId ?? 'all') . '-' . ($status ?? 'all') . '-' . ($dayOfWeek ?? 'all')))
+                        ], key('attendance-trend-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . implode(',', (array) ($trainerId ?? [])) . '-' . implode(',', (array) ($hallId ?? [])) . '-' . implode(',', (array) ($activityId ?? [])) . '-' . implode(',', (array) ($status ?? [])) . '-' . implode(',', (array) ($dayOfWeek ?? []))))
                     </div>
                 </x-filament::section>
 
@@ -157,7 +163,7 @@
                         Share of visited, missed, and cancelled statuses.
                     </div>
                     <div class="analytics-chart-wrap">
-                        @livewire('App\\Filament\\Widgets\\Analytics\\AttendanceStatusSplitChart', [
+                        @livewire(\App\Filament\Widgets\Analytics\AttendanceStatusSplitChart::class, [
                             'from' => $from,
                             'until' => $until,
                             'trainerId' => $trainerId,
@@ -165,84 +171,24 @@
                             'activityId' => $activityId,
                             'status' => $status,
                             'dayOfWeek' => $dayOfWeek,
-                        ], key('attendance-split-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . ($trainerId ?? 'all') . '-' . ($hallId ?? 'all') . '-' . ($activityId ?? 'all') . '-' . ($status ?? 'all') . '-' . ($dayOfWeek ?? 'all')))
+                        ], key('attendance-split-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . implode(',', (array) ($trainerId ?? [])) . '-' . implode(',', (array) ($hallId ?? [])) . '-' . implode(',', (array) ($activityId ?? [])) . '-' . implode(',', (array) ($status ?? [])) . '-' . implode(',', (array) ($dayOfWeek ?? []))))
                     </div>
                 </x-filament::section>
             </div>
 
-            <div class="analytics-charts grid grid-cols-1 gap-6 xl:grid-cols-2">
-                <x-filament::section heading="Top Trainers" class="analytics-panel analytics-chart">
-                    <div class="analytics-note mb-3 text-xs text-gray-500">
-                        Trainers with highest hall fill rate based on visited participants.
-                    </div>
-                    <div class="analytics-table-wrap overflow-x-auto">
-                        <table class="analytics-table min-w-full divide-y divide-gray-200 text-sm">
-                            <thead class="analytics-table-head bg-gray-50">
-                                <tr>
-                                    <th class="px-3 py-2 text-left font-medium text-gray-600">Trainer</th>
-                                    <th class="px-3 py-2 text-right font-medium text-gray-600">Sessions</th>
-                                    <th class="px-3 py-2 text-right font-medium text-gray-600">Visited</th>
-                                    <th class="px-3 py-2 text-right font-medium text-gray-600">Fill rate</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 bg-white">
-                                @forelse ($topTrainers as $row)
-                                    <tr>
-                                        <td class="px-3 py-2 text-gray-900">{{ $row->trainer_name }}</td>
-                                        <td class="px-3 py-2 text-right text-gray-900">{{ number_format((int) $row->sessions_count) }}</td>
-                                        <td class="px-3 py-2 text-right text-gray-900">{{ number_format((int) $row->total_visited) }}</td>
-                                        <td class="px-3 py-2 text-right text-gray-900">
-                                            <x-filament::badge :color="$fillRateColor((float) $row->fill_rate)">
-                                                {{ number_format((float) $row->fill_rate, 1) }}%
-                                            </x-filament::badge>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="px-3 py-6 text-center text-gray-500">No trainer data in selected period</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </x-filament::section>
-
-                <x-filament::section heading="Lowest Trainers" class="analytics-panel analytics-chart">
-                    <div class="analytics-note mb-3 text-xs text-gray-500">
-                        Trainers with lowest hall fill rate for selected filters.
-                    </div>
-                    <div class="analytics-table-wrap overflow-x-auto">
-                        <table class="analytics-table min-w-full divide-y divide-gray-200 text-sm">
-                            <thead class="analytics-table-head bg-gray-50">
-                                <tr>
-                                    <th class="px-3 py-2 text-left font-medium text-gray-600">Trainer</th>
-                                    <th class="px-3 py-2 text-right font-medium text-gray-600">Sessions</th>
-                                    <th class="px-3 py-2 text-right font-medium text-gray-600">Visited</th>
-                                    <th class="px-3 py-2 text-right font-medium text-gray-600">Fill rate</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 bg-white">
-                                @forelse ($lowestTrainers as $row)
-                                    <tr>
-                                        <td class="px-3 py-2 text-gray-900">{{ $row->trainer_name }}</td>
-                                        <td class="px-3 py-2 text-right text-gray-900">{{ number_format((int) $row->sessions_count) }}</td>
-                                        <td class="px-3 py-2 text-right text-gray-900">{{ number_format((int) $row->total_visited) }}</td>
-                                        <td class="px-3 py-2 text-right text-gray-900">
-                                            <x-filament::badge :color="$fillRateColor((float) $row->fill_rate)">
-                                                {{ number_format((float) $row->fill_rate, 1) }}%
-                                            </x-filament::badge>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="px-3 py-6 text-center text-gray-500">No trainer data in selected period</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </x-filament::section>
-            </div>
+            <x-filament::section heading="Peak Hours" class="analytics-panel analytics-chart">
+                <div class="analytics-note mb-3 text-xs text-gray-500">
+                    Check-in distribution by hour and day of week. Peak hour is highlighted in red.
+                </div>
+                <div class="analytics-chart-wrap">
+                    @livewire(\App\Filament\Widgets\Analytics\PeakHoursHeatmapChart::class, [
+                        'from'       => $from,
+                        'until'      => $until,
+                        'activityId' => $activityId,
+                        'hallId'     => $hallId,
+                    ], key('peak-heatmap-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . implode(',', (array) ($activityId ?? [])) . '-' . implode(',', (array) ($hallId ?? []))))
+                </div>
+            </x-filament::section>
         @else
             <x-filament::section heading="No Data" class="analytics-panel analytics-chart">
                 <div class="analytics-empty">

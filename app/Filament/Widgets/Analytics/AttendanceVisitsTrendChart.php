@@ -16,11 +16,11 @@ class AttendanceVisitsTrendChart extends ApexChartWidget
 
     public ?string $from = null;
     public ?string $until = null;
-    public ?int $trainerId = null;
-    public ?int $hallId = null;
-    public ?int $activityId = null;
-    public ?string $status = null;
-    public ?string $dayOfWeek = null;
+    public array $trainerId = [];
+    public array $hallId = [];
+    public array $activityId = [];
+    public array $status = [];
+    public array $dayOfWeek = [];
 
     protected function getOptions(): array
     {
@@ -120,22 +120,22 @@ JS);
                 DB::raw('COALESCE(schedule_occurrences.date, DATE(visits.visited_at))'),
                 [$from->toDateString(), $until->toDateString()]
             )
-            ->when($this->trainerId, fn (Builder $q) => $q->where('visits.trainer_id', $this->trainerId))
-            ->when($this->hallId, fn (Builder $q) => $q->where('schedules.hall_id', $this->hallId))
-            ->when($this->activityId, fn (Builder $q) => $q->where('schedules.activity_id', $this->activityId))
-            ->when($this->status, fn (Builder $q) => $q->where('visits.status', $this->status));
+            ->when($this->trainerId, fn (Builder $q) => $q->whereIn('visits.trainer_id', $this->trainerId))
+            ->when($this->hallId, fn (Builder $q) => $q->whereIn('schedules.hall_id', $this->hallId))
+            ->when($this->activityId, fn (Builder $q) => $q->whereIn('schedules.activity_id', $this->activityId))
+            ->when($this->status, fn (Builder $q) => $q->whereIn('visits.status', $this->status));
 
         if ($this->dayOfWeek) {
             $driver = DB::connection()->getDriverName();
             if ($driver === 'pgsql') {
                 $query->whereRaw(
-                    "LOWER(TO_CHAR(COALESCE(schedule_occurrences.date, DATE(visits.visited_at)), 'FMDay')) = ?",
-                    [strtolower($this->dayOfWeek)]
+                    "LOWER(TO_CHAR(COALESCE(schedule_occurrences.date, DATE(visits.visited_at)), 'FMDay')) = ANY(?::text[])",
+                    ['{' . implode(',', array_map('strtolower', $this->dayOfWeek)) . '}']
                 );
             } else {
-                $query->whereRaw(
-                    'LOWER(DAYNAME(COALESCE(schedule_occurrences.date, DATE(visits.visited_at)))) = ?',
-                    [strtolower($this->dayOfWeek)]
+                $query->whereIn(
+                    DB::raw('LOWER(DAYNAME(COALESCE(schedule_occurrences.date, DATE(visits.visited_at))))'),
+                    array_map('strtolower', $this->dayOfWeek)
                 );
             }
         }

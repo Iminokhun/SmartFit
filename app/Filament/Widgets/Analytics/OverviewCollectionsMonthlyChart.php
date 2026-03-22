@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets\Analytics;
 
+use App\Models\Expense;
 use App\Models\Payment;
 use Carbon\Carbon;
 use Filament\Support\RawJs;
@@ -20,35 +21,44 @@ class OverviewCollectionsMonthlyChart extends ApexChartWidget
         [$from, $until] = $this->resolveDateRange();
 
         $labels = [];
-        $series = [];
+        $revenueSeries = [];
+        $profitSeries  = [];
 
         $cursor = $from->copy()->startOfMonth();
-        $end = $until->copy()->endOfMonth();
+        $end    = $until->copy()->endOfMonth();
 
         while ($cursor->lte($end)) {
             $monthStart = $cursor->copy()->startOfMonth();
-            $monthEnd = $cursor->copy()->endOfMonth();
-            $labels[] = $cursor->format('M');
+            $monthEnd   = $cursor->copy()->endOfMonth();
+            $labels[]   = $cursor->format('M');
 
-            $series[] = (float) Payment::query()
+            $revenue = (float) Payment::query()
                 ->whereBetween('created_at', [$monthStart, $monthEnd])
                 ->whereIn('status', ['paid', 'partial'])
                 ->sum('amount');
+
+            $expenses = (float) Expense::query()
+                ->whereBetween('expenses_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+                ->sum('amount');
+
+            $revenueSeries[] = $revenue;
+            $profitSeries[]  = round($revenue - $expenses, 2);
 
             $cursor->addMonth();
         }
 
         return [
-            'chart' => ['type' => 'bar', 'height' => 280, 'toolbar' => ['show' => false]],
-            'series' => [
-                ['name' => 'Collections', 'data' => $series],
+            'chart'       => ['type' => 'bar', 'height' => 280, 'toolbar' => ['show' => false], 'fontFamily' => 'Manrope, sans-serif'],
+            'series'      => [
+                ['name' => 'Revenue',    'data' => $revenueSeries],
+                ['name' => 'Net Profit', 'data' => $profitSeries],
             ],
-            'colors' => ['#f59e0b'],
-            'plotOptions' => ['bar' => ['columnWidth' => '45%', 'borderRadius' => 4]],
-            'dataLabels' => ['enabled' => false],
-            'xaxis' => ['categories' => $labels],
-            'legend' => ['show' => false],
-            'grid' => ['borderColor' => '#e5e7eb', 'strokeDashArray' => 3],
+            'colors'      => ['#c7cbd1', '#1c2433'],
+            'plotOptions' => ['bar' => ['columnWidth' => '55%', 'borderRadius' => 3]],
+            'dataLabels'  => ['enabled' => false],
+            'xaxis'       => ['categories' => $labels, 'axisBorder' => ['show' => false], 'axisTicks' => ['show' => false]],
+            'legend'      => ['position' => 'top', 'horizontalAlign' => 'right', 'fontSize' => '12px'],
+            'grid'        => ['borderColor' => '#f1f5f9', 'strokeDashArray' => 4, 'yaxis' => ['lines' => ['show' => true]], 'xaxis' => ['lines' => ['show' => false]]],
         ];
     }
 
@@ -59,7 +69,16 @@ class OverviewCollectionsMonthlyChart extends ApexChartWidget
     yaxis: {
         labels: {
             formatter: function (value) {
+                if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
+                if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
                 return Number(value).toLocaleString('en-US');
+            }
+        }
+    },
+    tooltip: {
+        y: {
+            formatter: function (value) {
+                return Number(value).toLocaleString('en-US') + ' UZS';
             }
         }
     }
@@ -69,13 +88,6 @@ JS);
 
     private function resolveDateRange(): array
     {
-        $from = $this->from ? Carbon::parse($this->from) : Carbon::today()->startOfYear();
-        $until = $this->until ? Carbon::parse($this->until) : Carbon::today();
-
-        if ($from->gt($until)) {
-            [$from, $until] = [$until, $from];
-        }
-
-        return [$from->startOfDay(), $until->endOfDay()];
+        return [Carbon::today()->startOfYear()->startOfDay(), Carbon::today()->endOfDay()];
     }
 }

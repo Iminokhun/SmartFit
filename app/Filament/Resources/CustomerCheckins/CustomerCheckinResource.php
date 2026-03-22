@@ -18,7 +18,9 @@ class CustomerCheckinResource extends Resource
 {
     protected static ?string $model = CustomerCheckin::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|null|\UnitEnum $navigationGroup = 'Customers';
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowRightOnRectangle;
 
     public static function form(Schema $schema): Schema
     {

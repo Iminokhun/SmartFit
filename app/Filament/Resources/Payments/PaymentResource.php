@@ -34,6 +34,13 @@ class PaymentResource extends Resource
         return PaymentsTable::configure($table);
     }
 
+    public static function getWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\Payments\Widgets\PaymentQuickStats::class,
+        ];
+    }
+
     public static function getRelations(): array
     {
         return [

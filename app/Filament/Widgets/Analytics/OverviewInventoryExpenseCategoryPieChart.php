@@ -65,7 +65,7 @@ class OverviewInventoryExpenseCategoryPieChart extends ApexChartWidget
             ],
             'series' => $rows->pluck('total')->map(fn ($value) => (float) $value)->all(),
             'labels' => $rows->pluck('category_name')->all(),
-            'colors' => ['#334155', '#0ea5e9', '#f59e0b'],
+            'colors' => ['#1c2433', '#29a37a', '#c7cbd1'],
             'legend' => ['position' => 'bottom', 'fontSize' => '12px'],
             'dataLabels' => ['enabled' => false],
         ];
@@ -75,27 +75,27 @@ class OverviewInventoryExpenseCategoryPieChart extends ApexChartWidget
     {
         return RawJs::make(<<<'JS'
 {
-    tooltip: {
-        y: {
-            formatter: function (value) {
-                return Number(value).toLocaleString('en-US') + ' UZS';
-            }
-        }
-    },
     plotOptions: {
         pie: {
             donut: {
+                size: '75%',
                 labels: {
                     show: true,
+                    name:  { show: true, fontWeight: 600, color: '#6b7280' },
                     value: {
-                        formatter: function (value) {
-                            return Number(value).toLocaleString('en-US');
-                        }
-                    }
+                        show: true,
+                        fontFamily: 'Fraunces',
+                        fontSize: '24px',
+                        fontWeight: 600,
+                        formatter: function(val) { return Number(val).toLocaleString('en-US'); }
+                    },
+                    total: { show: true, showAlways: true, label: 'TOTAL' }
                 }
             }
         }
-    }
+    },
+    tooltip: { y: { formatter: function(val) { return Number(val).toLocaleString('en-US') + ' UZS'; } } },
+    dataLabels: { enabled: false }
 }
 JS);
     }

@@ -15,18 +15,18 @@ class FinanceExpenseCategoryPieChart extends ApexChartWidget
 
     public ?string $from = null;
     public ?string $until = null;
-    public ?int $expenseCategoryId = null;
+    public array $expenseCategoryId = [];
 
     protected function getOptions(): array
     {
         [$from, $until] = $this->resolveDateRange();
 
         $rows = Expense::query()
-            ->selectRaw('expense_categories.name as category_name, SUM(expenses.amount) as total')
-            ->join('expense_categories', 'expense_categories.id', '=', 'expenses.category_id')
+            ->selectRaw("COALESCE(expense_categories.name, 'Uncategorized') as category_name, SUM(expenses.amount) as total")
+            ->leftJoin('expense_categories', 'expense_categories.id', '=', 'expenses.category_id')
             ->whereBetween('expenses.expenses_date', [$from->toDateString(), $until->toDateString()])
-            ->when($this->expenseCategoryId, fn (Builder $query) => $query->where('expenses.category_id', $this->expenseCategoryId))
-            ->groupBy('expense_categories.name')
+            ->when($this->expenseCategoryId, fn (Builder $query) => $query->whereIn('expenses.category_id', $this->expenseCategoryId))
+            ->groupByRaw("COALESCE(expense_categories.name, 'Uncategorized')")
             ->orderByDesc('total')
             ->limit(8)
             ->get();
@@ -43,6 +43,12 @@ class FinanceExpenseCategoryPieChart extends ApexChartWidget
             'colors' => ['#2563eb', '#0f766e', '#f59e0b', '#7c3aed', '#e11d48', '#0ea5e9', '#f97316', '#334155'],
             'legend' => ['position' => 'bottom', 'fontSize' => '12px'],
             'dataLabels' => ['enabled' => false],
+            'noData' => [
+                'text' => 'No expenses in selected period',
+                'align' => 'center',
+                'verticalAlign' => 'middle',
+                'style' => ['fontSize' => '14px', 'color' => '#94a3b8'],
+            ],
         ];
     }
 

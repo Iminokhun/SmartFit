@@ -3,6 +3,7 @@
 namespace App\Services\Telegram;
 
 use App\Models\Customer;
+use App\Models\CustomerCheckin;
 use App\Models\CustomerSubscription;
 use App\Models\Schedule;
 use App\Models\Subscription;
@@ -394,6 +395,30 @@ class TelegramMiniAppService
                 'time_to' => $sub?->time_to ? Carbon::parse($sub->time_to)->format('H:i') : null,
             ];
         })->values()->all();
+    }
+
+    public function visitsHistory(int $customerId, ?int $subscriptionId = null): array
+    {
+        $query = CustomerCheckin::query()
+            ->where('customer_id', $customerId)
+            ->whereNotNull('schedule_id')
+            ->with(['schedule:id,hall_id', 'schedule.hall:id,name'])
+            ->orderBy('checked_in_at', 'desc')
+            ->limit(20);
+
+        if ($subscriptionId) {
+            $query->where('customer_subscription_id', $subscriptionId);
+        }
+
+        $checkins = $query->get();
+
+        $visits = $checkins->map(fn ($c) => [
+            'date' => $c->checked_in_at?->format('d M Y'),
+            'time' => $c->checked_in_at?->format('H:i'),
+            'hall' => $c->schedule?->hall?->name ?? null,
+        ])->values()->all();
+
+        return ['ok' => true, 'visits' => $visits];
     }
 
     private function scheduleSummary(int $customerId): array

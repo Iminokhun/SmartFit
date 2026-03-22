@@ -16,7 +16,7 @@ class ClientsNewActiveChart extends ApexChartWidget
 
     public ?string $from = null;
     public ?string $until = null;
-    public ?int $activityId = null;
+    public array $activityId = [];
 
     protected function getOptions(): array
     {
@@ -46,7 +46,7 @@ class ClientsNewActiveChart extends ApexChartWidget
                 ->whereDate('end_date', '>=', $date)
                 ->when($this->activityId, function (Builder $query) {
                     $query->whereHas('subscription', function (Builder $subQuery) {
-                        $subQuery->where('activity_id', $this->activityId);
+                        $subQuery->whereIn('activity_id', $this->activityId);
                     });
                 })
                 ->distinct('customer_id')

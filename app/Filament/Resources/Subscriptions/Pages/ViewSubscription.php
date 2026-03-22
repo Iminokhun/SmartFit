@@ -297,13 +297,15 @@ class ViewSubscription extends ViewRecord
         return count($labels) > 0 ? implode(', ', $labels) : 'All days';
     }
 
-    private static function formatTimeWindow(?string $from, ?string $to): string
+    private static function formatTimeWindow(mixed $from, mixed $to): string
     {
         if (! $from || ! $to) {
             return 'Any time';
         }
 
-        return substr($from, 0, 5) . ' - ' . substr($to, 0, 5);
+        $format = fn ($t) => $t instanceof \DateTimeInterface ? $t->format('H:i') : substr((string) $t, 0, 5);
+
+        return $format($from) . ' - ' . $format($to);
     }
 }
 

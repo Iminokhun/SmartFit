@@ -10,6 +10,13 @@ class ListPayments extends ListRecords
 {
     protected static string $resource = PaymentResource::class;
 
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\Payments\Widgets\PaymentQuickStats::class,
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [

@@ -16,6 +16,11 @@ class TrainerPersonal extends Page
 
     protected string $view = 'filament.pages.trainer-personal';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return \Filament\Facades\Filament::getCurrentPanel()?->getId() !== 'admin';
+    }
+
     public function getProfileSummaryProperty(): array
     {
         $user = auth()->user();

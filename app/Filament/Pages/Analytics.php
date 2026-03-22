@@ -6,6 +6,8 @@ use App\Enums\AssetEventType;
 use App\Enums\InventoryItemType;
 use App\Enums\InventoryStatus;
 use App\Models\AssetEvent;
+use App\Models\Customer;
+use App\Models\CustomerSubscription;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\Inventory;
@@ -29,6 +31,11 @@ class Analytics extends Page
     public ?string $until = null;
 
     public function mount(): void
+    {
+        $this->syncPeriodDates();
+    }
+
+    public function updatedPeriod(): void
     {
         $this->syncPeriodDates();
     }
@@ -59,6 +66,40 @@ class Analytics extends Page
         $inventoryPurchaseCost = $this->inventoryPurchaseCost($from, $until);
         $inventoryPurchaseCostPrev = $this->inventoryPurchaseCost($prevFrom, $prevUntil);
 
+        $expenses = (float) Expense::query()
+            ->whereBetween('expenses_date', [$from->toDateString(), $until->toDateString()])
+            ->sum('amount');
+        $expensesPrev = (float) Expense::query()
+            ->whereBetween('expenses_date', [$prevFrom->toDateString(), $prevUntil->toDateString()])
+            ->sum('amount');
+
+        $netProfit = $revenue - $expenses;
+        $netProfitPrev = $revenuePrev - $expensesPrev;
+
+        $collectionRate = ($revenue + $debt) > 0
+            ? round($revenue / ($revenue + $debt) * 100, 1)
+            : 0.0;
+        $collectionRatePrev = ($revenuePrev + $debtPrev) > 0
+            ? round($revenuePrev / ($revenuePrev + $debtPrev) * 100, 1)
+            : 0.0;
+
+        $expiringIds = CustomerSubscription::query()
+            ->whereBetween('end_date', [$from->toDateString(), $until->toDateString()])
+            ->distinct()
+            ->pluck('customer_id');
+
+        $churnedCount = Customer::query()
+            ->whereIn('id', $expiringIds)
+            ->whereDoesntHave('subscriptions', fn ($q) =>
+                $q->whereIn('status', ['active', 'pending'])->whereDate('end_date', '>=', today())
+            )
+            ->count();
+
+        $retainedCount = $expiringIds->count() - $churnedCount;
+        $churnRate = $expiringIds->count() > 0
+            ? round($churnedCount / $expiringIds->count() * 100, 1)
+            : 0.0;
+
         $lowStockCount = Inventory::query()
             ->whereIn('item_type', [InventoryItemType::Consumable->value, InventoryItemType::Retail->value])
             ->where('quantity', '<=', 10)
@@ -84,8 +125,12 @@ class Analytics extends Page
         return [
             'from' => $from,
             'until' => $until,
+            'period' => $this->period,
             'metrics' => [
                 'revenue' => $revenue,
+                'expenses' => $expenses,
+                'netProfit' => $netProfit,
+                'collectionRate' => $collectionRate,
                 'newCustomers' => $newCustomers,
                 'activeClients' => $activeClients,
                 'debt' => $debt,
@@ -93,10 +138,19 @@ class Analytics extends Page
             ],
             'kpiDeltas' => [
                 'revenue' => KpiCalculator::delta($revenue, $revenuePrev),
+                'expenses' => KpiCalculator::delta($expenses, $expensesPrev),
+                'netProfit' => KpiCalculator::delta($netProfit, $netProfitPrev),
+                'collectionRate' => KpiCalculator::delta($collectionRate, $collectionRatePrev),
                 'newCustomers' => KpiCalculator::delta($newCustomers, $newCustomersPrev),
                 'activeClients' => KpiCalculator::delta($activeClients, $activeClientsPrev),
                 'debt' => KpiCalculator::delta($debt, $debtPrev),
                 'inventoryPurchaseCost' => KpiCalculator::delta($inventoryPurchaseCost, $inventoryPurchaseCostPrev),
+            ],
+            'retentionHealth' => [
+                'churned' => $churnedCount,
+                'retained' => $retainedCount,
+                'churnRate' => $churnRate,
+                'total' => $expiringIds->count(),
             ],
             'statusSummary' => $statusKpi->statusSummary(),
             'inventorySnapshot' => [
@@ -174,7 +228,15 @@ class Analytics extends Page
     private function syncPeriodDates(): void
     {
         $today = Carbon::today();
-        $this->from = $today->copy()->startOfMonth()->toDateString();
-        $this->until = $today->copy()->endOfMonth()->toDateString();
+        if ($this->period === 'today') {
+            $this->from  = $today->toDateString();
+            $this->until = $today->toDateString();
+        } elseif ($this->period === 'week') {
+            $this->from  = $today->copy()->startOfWeek()->toDateString();
+            $this->until = $today->copy()->endOfWeek()->toDateString();
+        } else {
+            $this->from  = $today->copy()->startOfMonth()->toDateString();
+            $this->until = $today->copy()->endOfMonth()->toDateString();
+        }
     }
 }

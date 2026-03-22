@@ -16,4 +16,11 @@ class ListSubscriptions extends ListRecords
             CreateAction::make(),
         ];
     }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\Subscriptions\Widgets\SubscriptionQuickStats::class,
+        ];
+    }
 }

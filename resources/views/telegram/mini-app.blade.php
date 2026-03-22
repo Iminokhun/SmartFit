@@ -76,9 +76,9 @@
         </div>
 
         <div class="quick-actions">
-            <a href="{{ route('telegram.mini-app.my-subscriptions') }}" class="qa-btn" style="display:grid;place-items:center;text-decoration:none;" id="btn-my-subscriptions">My subscriptions</a>
-            <a href="{{ route('telegram.mini-app.subscriptions') }}" class="qa-btn" style="display:grid;place-items:center;text-decoration:none;">Subscription</a>
-            <button type="button" id="btn-show-qr" class="qa-btn">My QR</button>
+            <a href="{{ route('telegram.mini-app.my-subscriptions') }}" class="qa-btn" style="display:grid;place-items:center;text-decoration:none;" id="btn-my-subscriptions">My Pass</a>
+            <a href="{{ route('telegram.mini-app.subscriptions') }}" class="qa-btn" style="display:grid;place-items:center;text-decoration:none;">Subscriptions</a>
+            <button type="button" id="btn-show-qr" class="qa-btn" style="display:grid;place-items:center;text-decoration:none;">My QR</button>
         </div>
 
         <div id="subscriptions-card" class="card hidden" style="margin-top:12px;">

@@ -138,6 +138,29 @@ class TelegramMiniAppController extends Controller
         return view('telegram.mini-app-my-subscriptions');
     }
 
+    public function myVisits(Request $request, TelegramMiniAppService $miniAppService): JsonResponse
+    {
+        $data = $request->validate([
+            'init_data'       => ['required', 'string'],
+            'subscription_id' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $telegramUserId = $miniAppService->resolveTelegramUserId($data['init_data']);
+        if (! $telegramUserId) {
+            return response()->json(['ok' => false, 'message' => 'Invalid Telegram session.'], 422);
+        }
+
+        $profile = $miniAppService->getProfileByInitData($data['init_data']);
+        if (! ($profile['linked'] ?? false)) {
+            return response()->json(['ok' => false, 'message' => 'Account not linked.'], 422);
+        }
+
+        $customerId = (int) ($profile['customer']['id'] ?? 0);
+        $result = $miniAppService->visitsHistory($customerId, $data['subscription_id'] ?? null);
+
+        return response()->json($result);
+    }
+
     public function checkinQr(Request $request, TelegramMiniAppService $miniAppService, QrCheckinService $checkinService): JsonResponse
     {
         $data = $request->validate([
