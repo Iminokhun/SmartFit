@@ -43,6 +43,10 @@ return [
         'public_url'     => env('TELEGRAM_PUBLIC_URL'),
     ],
 
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+    ],
+
     'telegram_staff' => [
         'bot_token' => env('TELEGRAM_STAFF_BOT_TOKEN'),
         'bot_username' => env('TELEGRAM_STAFF_BOT_USERNAME'),

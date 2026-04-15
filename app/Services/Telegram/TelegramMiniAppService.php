@@ -12,9 +12,11 @@ use Carbon\Carbon;
 
 class TelegramMiniAppService
 {
+    public function __construct(private TelegramAuthService $auth) {}
+
     public function resolveTelegramUserId(string $initData): ?int
     {
-        $telegramUser = $this->validateAndExtractTelegramUser($initData);
+        $telegramUser = $this->auth->validateAndExtract($initData, (string) config('services.telegram.bot_token'));
         if (! $telegramUser) {
             return null;
         }
@@ -26,7 +28,7 @@ class TelegramMiniAppService
 
     public function catalog(string $initData): array
     {
-        $telegramUser = $this->validateAndExtractTelegramUser($initData);
+        $telegramUser = $this->auth->validateAndExtract($initData, (string) config('services.telegram.bot_token'));
         if (! $telegramUser) {
             return [
                 'ok' => false,
@@ -96,7 +98,7 @@ class TelegramMiniAppService
 
     public function getProfileByInitData(string $initData): array
     {
-        $telegramUser = $this->validateAndExtractTelegramUser($initData);
+        $telegramUser = $this->auth->validateAndExtract($initData, (string) config('services.telegram.bot_token'));
         if (! $telegramUser) {
             return [
                 'ok' => false,
@@ -137,7 +139,7 @@ class TelegramMiniAppService
 
     public function linkByIdentity(string $initData, string $phone, string $birthDate): array
     {
-        $telegramUser = $this->validateAndExtractTelegramUser($initData);
+        $telegramUser = $this->auth->validateAndExtract($initData, (string) config('services.telegram.bot_token'));
         if (! $telegramUser) {
             return [
                 'ok' => false,
@@ -572,45 +574,6 @@ class TelegramMiniAppService
             'days_ahead' => $bestDelta,
             'day_label' => $bestDay,
         ];
-    }
-
-    private function validateAndExtractTelegramUser(string $initData): ?array
-    {
-        parse_str($initData, $parsed);
-
-        $hash = (string) ($parsed['hash'] ?? '');
-        if ($hash === '') {
-            return null;
-        }
-
-        unset($parsed['hash']);
-
-        ksort($parsed);
-        $dataCheckString = collect($parsed)
-            ->map(fn ($value, $key) => "{$key}={$value}")
-            ->implode("\n");
-
-        $botToken = (string) config('services.telegram.bot_token');
-        if ($botToken === '') {
-            return null;
-        }
-
-        $secretKey = hash_hmac('sha256', $botToken, 'WebAppData', true);
-        $calculatedHash = hash_hmac('sha256', $dataCheckString, $secretKey);
-
-        if (! hash_equals($calculatedHash, $hash)) {
-            return null;
-        }
-
-        $authDate = (int) ($parsed['auth_date'] ?? 0);
-        if ($authDate > 0 && now()->timestamp - $authDate > 86400) {
-            return null;
-        }
-
-        $userJson = (string) ($parsed['user'] ?? '');
-        $user = json_decode($userJson, true);
-
-        return is_array($user) ? $user : null;
     }
 
     private function normalizePhone(string $phone): ?string

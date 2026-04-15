@@ -5,13 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\TelegramStaffLink;
 use App\Models\User;
 use App\Services\Checkin\QrCheckinService;
-use Carbon\Carbon;
+use App\Services\Telegram\TelegramAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class TelegramStaffMiniAppController extends Controller
 {
+    public function __construct(private TelegramAuthService $auth) {}
+
     public function show()
     {
         return view('telegram.staff-scan');
@@ -23,7 +25,7 @@ class TelegramStaffMiniAppController extends Controller
             'init_data' => ['required', 'string'],
         ]);
 
-        $telegramUser = $this->validateAndExtractTelegramUser($data['init_data']);
+        $telegramUser = $this->auth->validateAndExtract($data['init_data'], (string) config('services.telegram_staff.bot_token'));
         if (! $telegramUser) {
             return response()->json([
                 'ok' => false,
@@ -71,7 +73,7 @@ class TelegramStaffMiniAppController extends Controller
             'password' => ['required', 'string', 'min:6'],
         ]);
 
-        $telegramUser = $this->validateAndExtractTelegramUser($data['init_data']);
+        $telegramUser = $this->auth->validateAndExtract($data['init_data'], (string) config('services.telegram_staff.bot_token'));
         if (! $telegramUser) {
             return response()->json([
                 'ok' => false,
@@ -161,12 +163,11 @@ class TelegramStaffMiniAppController extends Controller
             $data['schedule_id'] ?? null
         );
 
-        $status = (int) ($result['status'] ?? 200);
-        unset($result['status']);
-
-        return response()->json($result, $status);
         \Log::info('staff.scan.resolve.payload', $request->all());
+
+        return $this->jsonResponse($result);
     }
+
     public function consume(Request $request, QrCheckinService $checkinService): JsonResponse
     {
         $data = $request->validate([
@@ -190,16 +191,14 @@ class TelegramStaffMiniAppController extends Controller
             (int) $user->id,
             $data['schedule_id'] ?? null
         );
-        $status = (int) ($result['status'] ?? 200);
-        unset($result['status']);
-
-        return response()->json($result, $status);
         \Log::info('staff.scan.consume.payload', $request->all());
+
+        return $this->jsonResponse($result);
     }
 
     private function resolveScannerUser(string $initData): ?User
     {
-        $telegramUser = $this->validateAndExtractTelegramUser($initData);
+        $telegramUser = $this->auth->validateAndExtract($initData, (string) config('services.telegram_staff.bot_token'));
         if (! $telegramUser) {
             return null;
         }
@@ -235,41 +234,11 @@ class TelegramStaffMiniAppController extends Controller
         return in_array((int) $user->role_id, [1, 6], true);
     }
 
-    private function validateAndExtractTelegramUser(string $initData): ?array
+    private function jsonResponse(array $result): JsonResponse
     {
-        parse_str($initData, $parsed);
+        $status = (int) ($result['status'] ?? 200);
+        unset($result['status']);
 
-        $hash = (string) ($parsed['hash'] ?? '');
-        if ($hash === '') {
-            return null;
-        }
-
-        unset($parsed['hash']);
-        ksort($parsed);
-
-        $dataCheckString = collect($parsed)
-            ->map(fn ($value, $key) => "{$key}={$value}")
-            ->implode("\n");
-
-        $botToken = (string) config('services.telegram_staff.bot_token');
-        if ($botToken === '') {
-            return null;
-        }
-
-        $secretKey = hash_hmac('sha256', $botToken, 'WebAppData', true);
-        $calculatedHash = hash_hmac('sha256', $dataCheckString, $secretKey);
-        if (! hash_equals($calculatedHash, $hash)) {
-            return null;
-        }
-
-        $authDate = (int) ($parsed['auth_date'] ?? 0);
-        if ($authDate > 0 && Carbon::now()->timestamp - $authDate > 86400) {
-            return null;
-        }
-
-        $userJson = (string) ($parsed['user'] ?? '');
-        $user = json_decode($userJson, true);
-
-        return is_array($user) ? $user : null;
+        return response()->json($result, $status);
     }
 }

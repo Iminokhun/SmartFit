@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\AiChatService;
 use App\Services\Checkin\QrCheckinService;
 use App\Services\Telegram\TelegramMiniAppService;
 use App\Services\Telegram\TelegramWebhookService;
@@ -27,11 +28,7 @@ class TelegramMiniAppController extends Controller
             'init_data' => ['required', 'string'],
         ]);
 
-        $result = $miniAppService->getProfileByInitData($data['init_data']);
-        $status = (int) ($result['status'] ?? 200);
-        unset($result['status']);
-
-        return response()->json($result, $status);
+        return $this->jsonResponse($miniAppService->getProfileByInitData($data['init_data']));
     }
 
     public function catalog(Request $request, TelegramMiniAppService $miniAppService): JsonResponse
@@ -40,11 +37,7 @@ class TelegramMiniAppController extends Controller
             'init_data' => ['required', 'string'],
         ]);
 
-        $result = $miniAppService->catalog($data['init_data']);
-        $status = (int) ($result['status'] ?? 200);
-        unset($result['status']);
-
-        return response()->json($result, $status);
+        return $this->jsonResponse($miniAppService->catalog($data['init_data']));
     }
 
     public function link(Request $request, TelegramMiniAppService $miniAppService): JsonResponse
@@ -55,15 +48,11 @@ class TelegramMiniAppController extends Controller
             'birth_date' => ['required', 'date'],
         ]);
 
-        $result = $miniAppService->linkByIdentity(
+        return $this->jsonResponse($miniAppService->linkByIdentity(
             $data['init_data'],
             $data['phone'],
             $data['birth_date'],
-        );
-        $status = (int) ($result['status'] ?? 200);
-        unset($result['status']);
-
-        return response()->json($result, $status);
+        ));
     }
 
     public function purchaseInvoice(
@@ -103,10 +92,7 @@ class TelegramMiniAppController extends Controller
             'message' => (string) ($result['message'] ?? ''),
         ]);
 
-        $status = (int) ($result['status'] ?? 200);
-        unset($result['status']);
-
-        return response()->json($result, $status);
+        return $this->jsonResponse($result);
     }
 
     public function mySubscriptions(Request $request, TelegramMiniAppService $miniAppService): JsonResponse
@@ -161,6 +147,46 @@ class TelegramMiniAppController extends Controller
         return response()->json($result);
     }
 
+    public function chatPage(Request $request, TelegramMiniAppService $miniAppService): \Illuminate\View\View
+    {
+        return view('telegram.mini-app-chat');
+    }
+
+    public function chat(Request $request, TelegramMiniAppService $miniAppService, AiChatService $aiChat): JsonResponse
+    {
+        $data = $request->validate([
+            'init_data' => ['required', 'string'],
+            'message'   => ['required', 'string', 'max:500'],
+        ]);
+
+        $telegramUserId = $miniAppService->resolveTelegramUserId($data['init_data']);
+        if (! $telegramUserId) {
+            return response()->json(['ok' => false, 'message' => 'Invalid Telegram session.'], 422);
+        }
+
+        $reply = $aiChat->chat($telegramUserId, $data['message']);
+
+        return response()->json(['ok' => true, 'reply' => $reply]);
+    }
+
+    public function chatPhoto(Request $request, TelegramMiniAppService $miniAppService, AiChatService $aiChat): JsonResponse
+    {
+        $data = $request->validate([
+            'init_data' => ['required', 'string'],
+            'image'     => ['required', 'string'],
+            'mime_type' => ['required', 'string'],
+        ]);
+
+        $telegramUserId = $miniAppService->resolveTelegramUserId($data['init_data']);
+        if (! $telegramUserId) {
+            return response()->json(['ok' => false, 'message' => 'Invalid Telegram session.'], 422);
+        }
+
+        $reply = $aiChat->chatPhoto($telegramUserId, $data['image'], $data['mime_type']);
+
+        return response()->json(['ok' => true, 'reply' => $reply]);
+    }
+
     public function checkinQr(Request $request, TelegramMiniAppService $miniAppService, QrCheckinService $checkinService): JsonResponse
     {
         $data = $request->validate([
@@ -206,5 +232,13 @@ class TelegramMiniAppController extends Controller
             'qr_svg' => $qrData['qr_svg'],
             'qr_payload' => $qrData['payload'],
         ]);
+    }
+
+    private function jsonResponse(array $result): JsonResponse
+    {
+        $status = (int) ($result['status'] ?? 200);
+        unset($result['status']);
+
+        return response()->json($result, $status);
     }
 }

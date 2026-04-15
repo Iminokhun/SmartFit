@@ -13,6 +13,7 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/css/telegram/mini-app.css',
                 'resources/css/telegram/staff-scan.css',
+                'resources/js/telegram/telegram-utils.js',
 
             ],
             refresh: true,
