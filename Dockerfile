@@ -1,33 +1,78 @@
-FROM php:8.4-fpm
+# ═══════════════════════════════════════════
+# STAGE 1: Node — сборка JS/CSS assets
+# ═══════════════════════════════════════════
+FROM node:20-alpine AS node-builder
 
+WORKDIR /app
+
+# Сначала только package файлы — слой кэшируется
+COPY package*.json ./
+RUN npm ci
+
+# Копируем исходники и собираем assets
+COPY . .
+RUN npm run build
+
+
+# ═══════════════════════════════════════════
+# STAGE 2: PHP Production
+# ═══════════════════════════════════════════
+FROM php:8.4-fpm-alpine AS production
+
+# Системные зависимости (alpine — минимальный набор)
+RUN apk add --no-cache \
+    git \
+    unzip \
+    postgresql-client \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    libzip-dev \
+    icu-dev \
+    oniguruma-dev
+
+# PHP расширения
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+RUN chmod +x /usr/local/bin/install-php-extensions \
+    && install-php-extensions \
+        gd \
+        zip \
+        soap \
+        pdo_pgsql \
+        pcntl \
+        intl \
+        opcache
 
-RUN apt-get update && apt-get install -y git postgresql-client unzip
+# OPcache настройки для production
+RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini
 
-RUN chmod +x /usr/local/bin/install-php-extensions && sync && install-php-extensions gd zip soap pdo_pgsql pcntl intl
-
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
-RUN apt-get install -y nodejs
-
-ENV NODE_VERSION=20.9.0
-RUN apt install -y curl
-RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-ENV NVM_DIR=/root/.nvm
-RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
-RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
-RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
-ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
-RUN node --version
-RUN npm --version
-
+# Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/default
-# Fix Laravel permissions automatically
-# RUN mkdir -p /var/www/default/storage /var/www/default/bootstrap/cache \
-#     && chown -R www-data:www-data /var/www/default/storage /var/www/default/bootstrap/cache \
-#     && chmod -R 775 /var/www/default/storage /var/www/default/bootstrap/cache
 
+# Сначала только composer файлы — слой кэшируется если код не менялся
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --optimize-autoloader \
+    --no-scripts \
+    --no-interaction
 
+# Копируем исходники Laravel
+COPY . .
 
-CMD "/usr/local/sbin/php-fpm"
+# Берём скомпилированные assets из Stage 1 (Node не попадает в образ)
+COPY --from=node-builder /app/public/build ./public/build
+
+# Права для Laravel
+RUN chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# Переключаемся на non-root пользователя
+USER www-data
+
+CMD ["/usr/local/sbin/php-fpm"]

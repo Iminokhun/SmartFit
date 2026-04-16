@@ -2,12 +2,10 @@
 
 namespace App\Filament\Resources\AuthLogs\Tables;
 
-use Filament\Forms\Components\DatePicker;
+use App\Filament\Support\FilamentFilters;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class AuthLogsTable
 {
@@ -64,21 +62,7 @@ class AuthLogsTable
                         'manager' => 'Manager',
                     ]),
 
-                Filter::make('created_at')
-                    ->label('Date range')
-                    ->form([
-                        DatePicker::make('from')->label('From'),
-                        DatePicker::make('until')->label('Until'),
-                    ])
-                    ->query(function (Builder $query, array $data): void {
-                        if (! empty($data['from'])) {
-                            $query->whereDate('created_at', '>=', $data['from']);
-                        }
-
-                        if (! empty($data['until'])) {
-                            $query->whereDate('created_at', '<=', $data['until']);
-                        }
-                    }),
+                FilamentFilters::dateRange(),
             ])
             ->recordActions([])
             ->toolbarActions([]);

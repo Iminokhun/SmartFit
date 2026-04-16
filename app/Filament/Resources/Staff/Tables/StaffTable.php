@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Staff\Tables;
 
 use App\Filament\Resources\Staff\StaffResource;
+use App\Filament\Support\FilamentColumns;
 use App\Models\Staff;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -37,19 +38,13 @@ class StaffTable
                     ->label('Experience')
                     ->suffix('yrs'),
 
-                TextColumn::make('salary')
-                    ->money('UZS')
-                    ->sortable(),
+                FilamentColumns::money('salary'),
 
-                TextColumn::make('status')
-                    ->badge()
-                    ->size('large')
-                    ->colors([
-                        'success' => 'active',
-                        'warning' => 'vacation',
-                        'gray'    => 'inactive',
-                    ])
-                    ->formatStateUsing(fn ($state) => ucfirst($state)),
+                FilamentColumns::statusBadge('status', [
+                    'active'   => 'success',
+                    'vacation' => 'warning',
+                    'inactive' => 'gray',
+                ])->size('large'),
             ])
             ->filters([
                 SelectFilter::make('status')

@@ -21,8 +21,18 @@ body {
 
 h1 {
     margin: 0 0 8px;
-    font-size: 20px;
+    font-size: 18px;
 }
+
+label {
+    display: block;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.mt-1 { margin-top:  4px; }
+.mt-3 { margin-top: 12px; }
+.hint { font-size: 12px; color: #94a3b8; }
 
 p {
     margin: 0;

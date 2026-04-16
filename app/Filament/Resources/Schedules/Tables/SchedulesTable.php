@@ -2,12 +2,11 @@
 
 namespace App\Filament\Resources\Schedules\Tables;
 
-use App\Filament\Resources\Payments\PaymentResource;
 use App\Filament\Resources\Schedules\ScheduleResource;
+use App\Filament\Support\FilamentActions;
+use App\Models\Schedule;
 use Carbon\Carbon;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
@@ -104,14 +103,10 @@ class SchedulesTable
                     ->icon('heroicon-o-clipboard-document-check')
                     ->url(fn ($record) => \App\Filament\Resources\Schedules\ScheduleResource::getUrl('attendance', ['record' => $record]))
                     ->color('success'),
-                DeleteAction::make()
-                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
+                FilamentActions::deleteWithPolicy(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\Schedule::class)),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(Schedule::class),
             ]);
     }
 }

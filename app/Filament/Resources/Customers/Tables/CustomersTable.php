@@ -3,16 +3,13 @@
 namespace App\Filament\Resources\Customers\Tables;
 
 use App\Filament\Resources\Customers\CustomerResource;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\DatePicker;
+use App\Filament\Support\FilamentActions;
+use App\Filament\Support\FilamentColumns;
+use App\Filament\Support\FilamentFilters;
+use App\Models\Customer;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 class CustomersTable
@@ -40,17 +37,12 @@ class CustomersTable
                     ->sortable()
                     ->searchable(),
 
-                TextColumn::make('status')
-                    ->label('Status')
-                    ->badge()
-                    ->formatStateUsing(fn ($state) => Str::ucfirst($state))
-                    ->colors([
-                        'success' => 'active',
-                        'danger' => 'inactive',
-                        'warning' => 'blocked',
-                        'gray' => 'deleted',
-                    ])
-                    ->searchable(),
+                FilamentColumns::statusBadge('status', [
+                    'active'   => 'success',
+                    'inactive' => 'danger',
+                    'blocked'  => 'warning',
+                    'deleted'  => 'gray',
+                ], 'Status')->searchable(),
 
                 TextColumn::make('email')
                     ->label('Email')
@@ -65,45 +57,27 @@ class CustomersTable
                 SelectFilter::make('status')
                     ->multiple()
                     ->options([
-                        'active' => 'Active',
+                        'active'   => 'Active',
                         'inactive' => 'Inactive',
-                        'blocked' => 'Blocked',
-                        'deleted' => 'Deleted',
+                        'blocked'  => 'Blocked',
+                        'deleted'  => 'Deleted',
                     ]),
 
                 SelectFilter::make('gender')
                     ->multiple()
                     ->options([
-                        'male' => 'Male',
+                        'male'   => 'Male',
                         'female' => 'Female',
                     ]),
 
-                Filter::make('created_at')
-                    ->label('Created range')
-                    ->form([
-                        DatePicker::make('from')->label('From'),
-                        DatePicker::make('until')->label('Until'),
-                    ])
-                    ->query(function (Builder $query, array $data): void {
-                        if (! empty($data['from'])) {
-                            $query->whereDate('created_at', '>=', $data['from']);
-                        }
-
-                        if (! empty($data['until'])) {
-                            $query->whereDate('created_at', '<=', $data['until']);
-                        }
-                    }),
+                FilamentFilters::dateRange('created_at', 'Created range'),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make()
-                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
+                \Filament\Actions\EditAction::make(),
+                FilamentActions::deleteWithPolicy(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\Customer::class)),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(Customer::class),
             ]);
     }
 }

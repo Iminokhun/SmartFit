@@ -3,13 +3,11 @@
 namespace App\Filament\Resources\Expenses\Tables;
 
 use App\Filament\Resources\Expenses\ExpenseResource;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\DatePicker;
+use App\Filament\Support\FilamentActions;
+use App\Filament\Support\FilamentColumns;
+use App\Filament\Support\FilamentFilters;
+use App\Models\Expense;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
@@ -26,9 +24,7 @@ class ExpensesTable
                     ->searchable()
                     ->badge(),
 
-                TextColumn::make('amount')
-                    ->money('UZS')
-                    ->sortable(),
+                FilamentColumns::money('amount'),
 
                 TextColumn::make('expenses_date')
                     ->date()
@@ -57,36 +53,14 @@ class ExpensesTable
                     ->searchable()
                     ->preload(),
 
-                Filter::make('expenses_date')
-                    ->label('Date range')
-                    ->form([
-                        DatePicker::make('from')->label('From'),
-                        DatePicker::make('until')->label('Until'),
-                    ])
-                    ->query(function ($query, array $data) {
-                        return $query
-                            ->when(
-                                $data['from'] ?? null,
-                                fn ($q, $date) => $q->whereDate('expenses_date', '>=', $date)
-                            )
-                            ->when(
-                                $data['until'] ?? null,
-                                fn ($q, $date) => $q->whereDate('expenses_date', '<=', $date)
-                            );
-                    }),
+                FilamentFilters::dateRange('expenses_date', 'Date range'),
             ])
             ->recordActions([
-                EditAction::make()
-                    ->visible(fn ($record) => auth()->user()?->can('update', $record)),
-                DeleteAction::make()
-                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
-
+                FilamentActions::editWithPolicy(),
+                FilamentActions::deleteWithPolicy(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\Expense::class)),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(Expense::class),
             ]);
     }
 }

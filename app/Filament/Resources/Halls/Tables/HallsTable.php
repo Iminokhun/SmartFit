@@ -3,9 +3,8 @@
 namespace App\Filament\Resources\Halls\Tables;
 
 use App\Filament\Resources\Halls\HallResource;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
+use App\Filament\Support\FilamentActions;
+use App\Models\Hall;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -35,14 +34,10 @@ class HallsTable
             ])
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make()
-                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
+                FilamentActions::deleteWithPolicy(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\Hall::class)),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(Hall::class),
             ]);
     }
 }

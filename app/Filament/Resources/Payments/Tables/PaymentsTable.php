@@ -3,17 +3,13 @@
 namespace App\Filament\Resources\Payments\Tables;
 
 use App\Filament\Resources\Payments\PaymentResource;
+use App\Filament\Support\FilamentActions;
+use App\Filament\Support\FilamentColumns;
+use App\Filament\Support\FilamentFilters;
 use App\Models\Payment;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class PaymentsTable
 {
@@ -53,17 +49,12 @@ class PaymentsTable
                     ->searchable()
                     ->badge(),
 
-                TextColumn::make('status')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'paid' => 'success',
-                        'partial' => 'warning',
-                        'pending' => 'gray',
-                        'failed' => 'danger',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn ($state) => ucfirst((string) $state)),
-
+                FilamentColumns::statusBadge('status', [
+                    'paid'    => 'success',
+                    'partial' => 'warning',
+                    'pending' => 'gray',
+                    'failed'  => 'danger',
+                ]),
                 TextColumn::make('created_at')
                     ->label('Date')
                     ->dateTime()
@@ -74,40 +65,20 @@ class PaymentsTable
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options([
-                        'paid' => 'Paid',
+                        'paid'    => 'Paid',
                         'partial' => 'Partial',
                         'pending' => 'Pending',
-                        'failed' => 'Failed',
+                        'failed'  => 'Failed',
                     ]),
 
-                Filter::make('created_at')
-                    ->label('Date range')
-                    ->form([
-                        DatePicker::make('from')->label('From'),
-                        DatePicker::make('until')->label('Until'),
-                    ])
-                    ->query(function (Builder $query, array $data): void {
-                        if (! empty($data['from'])) {
-                            $query->whereDate('created_at', '>=', $data['from']);
-                        }
-
-                        if (! empty($data['until'])) {
-                            $query->whereDate('created_at', '<=', $data['until']);
-                        }
-                    }),
+                FilamentFilters::dateRange('created_at', 'Date range'),
             ])
             ->recordActions([
-                EditAction::make()
-                    ->visible(fn ($record) => auth()->user()?->can('update', $record)),
-                DeleteAction::make()
-                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
+                FilamentActions::editWithPolicy(),
+                FilamentActions::deleteWithPolicy(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->can('deleteAny', Payment::class)),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(Payment::class),
             ]);
     }
 }
-

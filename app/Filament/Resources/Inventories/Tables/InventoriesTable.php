@@ -6,11 +6,10 @@ use App\Enums\InventoryItemType;
 use App\Enums\InventoryStatus;
 use App\Filament\Resources\Expenses\ExpenseResource;
 use App\Filament\Resources\Inventories\InventoryResource;
+use App\Filament\Support\FilamentActions;
+use App\Filament\Support\FilamentColumns;
 use App\Models\Inventory;
 use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -90,11 +89,7 @@ class InventoriesTable
                     ->sortable()
                     ->toggleable(),
 
-                TextColumn::make('expense.amount')
-                    ->label('Expense amount')
-                    ->money('UZS')
-                    ->sortable()
-                    ->toggleable(),
+                FilamentColumns::money('expense.amount', 'Expense amount')->toggleable(),
 
                 TextColumn::make('expense.expenses_date')
                     ->label('Expense date')
@@ -152,14 +147,10 @@ class InventoriesTable
                     ->url(fn ($record) => $record->expense_id ? ExpenseResource::getUrl('edit', ['record' => $record->expense_id]) : null)
                     ->openUrlInNewTab()
                     ->visible(fn ($record): bool => ! empty($record->expense_id)),
-                DeleteAction::make()
-                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
+                FilamentActions::deleteWithPolicy(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->can('deleteAny', Inventory::class)),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(Inventory::class),
             ]);
     }
 }

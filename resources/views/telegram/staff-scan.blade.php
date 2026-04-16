@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartFit Staff Scanner</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    @vite('resources/css/telegram/staff-scan.css')
+    @vite(['resources/css/telegram/staff-scan.css', 'resources/js/telegram/telegram-utils.js'])
 </head>
 <body>
 <div class="wrap">
@@ -15,7 +15,7 @@
     </div>
 
     <div id="link-card" class="card hidden">
-        <h1 style="font-size:18px;">Link Staff Account</h1>
+        <h1>Link Staff Account</h1>
         <p>Login with manager/admin account from ERP panel.</p>
         <input id="staff-email" class="input" type="email" placeholder="manager@example.com">
         <input id="staff-password" class="input" type="password" placeholder="Password">
@@ -23,16 +23,16 @@
     </div>
 
     <div id="scan-card" class="card hidden">
-        <h1 style="font-size:18px;">Ready to Scan</h1>
+        <h1>Ready to Scan</h1>
         <p id="staff-meta" class="staff-meta"></p>
-        <label for="schedule-select" style="font-size:12px;color:#94a3b8;display:block;margin-top:12px;">Schedule</label>
+        <label for="schedule-select" class="mt-3">Schedule</label>
         <select id="schedule-select" class="input"></select>
         <button id="btn-scan" class="btn">Open Scanner</button>
         <button id="btn-refresh" class="btn secondary">Refresh Status</button>
     </div>
 
     <div id="selection-card" class="card hidden">
-        <h1 style="font-size:18px;">Select Subscription</h1>
+        <h1>Select Subscription</h1>
         <p>Customer has multiple active subscriptions.</p>
         <div id="option-list" class="option-list"></div>
     </div>
@@ -41,11 +41,7 @@
 </div>
 
 <script>
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-        tg.ready();
-        tg.expand();
-    }
+    const tg = window.tg;
 
     const linkCard = document.getElementById('link-card');
     const scanCard = document.getElementById('scan-card');
@@ -200,8 +196,8 @@
             btn.className = 'option-btn';
             btn.innerHTML = `
                 <div><strong>${item.subscription_name}</strong></div>
-                <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Valid: ${item.start_date} - ${item.end_date}</div>
-                <div style="font-size:12px;color:#94a3b8;">Visits: ${item.remaining_visits_label}</div>
+                <div class="hint mt-1">Valid: ${item.start_date} - ${item.end_date}</div>
+                <div class="hint">Visits: ${item.remaining_visits_label}</div>
             `;
             btn.addEventListener('click', () => consumeForSelection(item.customer_subscription_id));
             optionList.appendChild(btn);

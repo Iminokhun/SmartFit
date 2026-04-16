@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\InventoryMovements\Tables;
 
 use App\Filament\Resources\InventoryMovements\InventoryMovementResource;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
+use App\Filament\Support\FilamentActions;
+use App\Models\InventoryMovement;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -57,10 +57,7 @@ class InventoryMovementsTable
                     ->visible(fn () => self::canManage()),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\InventoryMovement::class)),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(InventoryMovement::class),
             ]);
     }
 

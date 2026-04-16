@@ -2,15 +2,13 @@
 
 namespace App\Filament\Resources\Subscriptions\Tables;
 
-use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\Subscriptions\SubscriptionResource;
+use App\Filament\Support\FilamentActions;
+use App\Filament\Support\FilamentColumns;
 use App\Models\Activity;
 use App\Models\Hall;
 use App\Models\Staff;
 use App\Models\Subscription;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -55,9 +53,7 @@ class SubscriptionsTable
                     ->badge()
                     ->color(fn ($record) => $record->capacityColor()),
 
-                TextColumn::make('price')
-                    ->money('UZS')
-                    ->sortable(),
+                FilamentColumns::money('price'),
 
                 TextColumn::make('final_price')
                     ->label('Final price')
@@ -148,14 +144,10 @@ class SubscriptionsTable
             ])
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make()
-                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
+                FilamentActions::deleteWithPolicy(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\Subscription::class)),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(Subscription::class),
             ]);
     }
 }

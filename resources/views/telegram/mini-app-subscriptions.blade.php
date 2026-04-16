@@ -5,14 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Subscriptions</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    @vite('resources/css/telegram/mini-app.css')
+    @vite(['resources/css/telegram/mini-app.css', 'resources/js/telegram/telegram-utils.js'])
 </head>
 <body>
 <div class="wrap">
     <div class="card">
         <div class="toolbar">
-            <a href="{{ route('telegram.mini-app.show') }}" class="back-link">Back</a>
-            <h1 style="margin: 0;">Subscriptions</h1>
+            <h1>Subscriptions</h1>
         </div>
         <p class="muted">Choose a plan to purchase.</p>
 
@@ -30,7 +29,7 @@
             </select>
         </div>
 
-        <div id="plans-empty" class="kpi-value" style="margin-top: 10px;">Loading...</div>
+        <div id="plans-empty" class="kpi-value mt-2">Loading...</div>
         <div id="sections" class="hidden">
             <div class="section-block">
                 <div class="section-head">Popular</div>
@@ -42,7 +41,7 @@
             </div>
             <div class="section-block">
                 <div class="section-head">All Plans</div>
-                <button type="button" id="toggle-all-plans" class="back-link" style="margin-bottom:8px;">Show all plans</button>
+                <button type="button" id="toggle-all-plans" class="back-link mb-2">Show all plans</button>
                 <div id="all-list" class="plans-list hidden"></div>
             </div>
         </div>
@@ -50,42 +49,9 @@
 </div>
 
 <script>
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-        tg.ready();
-        tg.expand();
-    }
+    const tg = window.tg;
 
-    const haptic = tg?.HapticFeedback;
-
-    function hapticSelection() { haptic?.selectionChanged(); }
-    function hapticSuccess() { haptic?.notificationOccurred('success'); }
-    function hapticError() { haptic?.notificationOccurred('error'); }
-    function hapticMedium() { haptic?.impactOccurred('medium'); }
-
-    function tgAlert(text) {
-        if (tg?.showAlert) {
-            tg.showAlert(text);
-        } else {
-            alert(text);
-        }
-    }
-
-    function tgConfirm(text, callback) {
-        if (tg?.showConfirm) {
-            tg.showConfirm(text, callback);
-        } else {
-            callback(confirm(text));
-        }
-    }
-
-    // Show native BackButton
-    if (tg?.BackButton) {
-        tg.BackButton.show();
-        tg.BackButton.onClick(() => {
-            window.location.href = '{{ route('telegram.mini-app.show') }}';
-        });
-    }
+    if (tg?.BackButton) tg.BackButton.hide();
 
     const msg = document.getElementById('msg');
     const searchInput = document.getElementById('search');
@@ -104,20 +70,6 @@
     function showMessage(text, ok) {
         msg.className = 'msg ' + (ok ? 'ok' : 'err');
         msg.textContent = text;
-    }
-
-    function escapeHtml(value) {
-        return String(value ?? '')
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#039;');
-    }
-
-    function formatMoney(value) {
-        const num = Number(value || 0);
-        return num.toLocaleString('en-US');
     }
 
     async function sendInvoice(btn, subscriptionId, planName, finalPrice) {
@@ -354,5 +306,6 @@
         plansEmpty.textContent = 'No data';
     });
 </script>
+<x-telegram.bottom-nav active="store" />
 </body>
 </html>

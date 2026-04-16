@@ -3,10 +3,8 @@
 namespace App\Filament\Resources\Activities\Tables;
 
 use App\Filament\Resources\Activities\ActivityResource;
-use App\Filament\Resources\Customers\CustomerResource;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
+use App\Filament\Support\FilamentActions;
+use App\Models\Activity;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -38,14 +36,10 @@ class ActivitiesTable
             ])
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make()
-                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
+                FilamentActions::deleteWithPolicy(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\Activity::class)),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(Activity::class),
             ]);
     }
 }

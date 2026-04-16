@@ -3,12 +3,10 @@
 namespace App\Filament\Resources\CustomerSubscriptions\Tables;
 
 use App\Filament\Resources\Customers\CustomerResource;
-use App\Filament\Resources\Payments\PaymentResource;
+use App\Filament\Support\FilamentActions;
+use App\Filament\Support\FilamentColumns;
 use App\Models\Activity;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
+use App\Models\CustomerSubscription;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -47,39 +45,22 @@ class CustomerSubscriptionsTable
                     ->label('Visits left')
                     ->sortable(),
 
-                TextColumn::make('status')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'active' => 'success',
-                        'pending' => 'info',
-                        'expired' => 'danger',
-                        'frozen' => 'warning',
-                        'cancelled' => 'gray',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn ($state) => ucfirst((string) $state))
-                    ->label('Status'),
+                FilamentColumns::statusBadge('status', [
+                    'active'    => 'success',
+                    'pending'   => 'info',
+                    'expired'   => 'danger',
+                    'frozen'    => 'warning',
+                    'cancelled' => 'gray',
+                ], 'Status'),
 
-                TextColumn::make('paid_amount')
-                    ->label('Paid')
-                    ->money('UZS')
-                    ->sortable(),
+                FilamentColumns::money('paid_amount', 'Paid'),
+                FilamentColumns::money('debt', 'Debt'),
 
-                TextColumn::make('debt')
-                    ->label('Debt')
-                    ->money('UZS')
-                    ->sortable(),
-
-                TextColumn::make('payment_status')
-                    ->label('Payment')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'paid' => 'success',
-                        'partial' => 'warning',
-                        'unpaid' => 'gray',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn ($state) => ucfirst((string) $state)),
+                FilamentColumns::statusBadge('payment_status', [
+                    'paid'    => 'success',
+                    'partial' => 'warning',
+                    'unpaid'  => 'gray',
+                ], 'Payment'),
             ])
             ->defaultSort('id', 'desc')
             ->filters([
@@ -87,10 +68,10 @@ class CustomerSubscriptionsTable
                     ->label('Status')
                     ->multiple()
                     ->options([
-                        'active' => 'Active',
-                        'pending' => 'Pending',
-                        'expired' => 'Expired',
-                        'frozen' => 'Frozen',
+                        'active'    => 'Active',
+                        'pending'   => 'Pending',
+                        'expired'   => 'Expired',
+                        'frozen'    => 'Frozen',
                         'cancelled' => 'Cancelled',
                     ]),
 
@@ -98,9 +79,9 @@ class CustomerSubscriptionsTable
                     ->label('Payment')
                     ->multiple()
                     ->options([
-                        'paid' => 'Paid',
+                        'paid'    => 'Paid',
                         'partial' => 'Partial',
-                        'unpaid' => 'Unpaid',
+                        'unpaid'  => 'Unpaid',
                     ]),
 
                 SelectFilter::make('activity')
@@ -127,10 +108,8 @@ class CustomerSubscriptionsTable
 
                 Filter::make('date_range')
                     ->form([
-                        DatePicker::make('from')
-                            ->label('Start from'),
-                        DatePicker::make('until')
-                            ->label('End until'),
+                        DatePicker::make('from')->label('Start from'),
+                        DatePicker::make('until')->label('End until'),
                     ])
                     ->query(function (Builder $query, array $data) {
                         if (empty($data['from']) && empty($data['until'])) {
@@ -147,15 +126,11 @@ class CustomerSubscriptionsTable
                     }),
             ])
             ->recordActions([
-                DeleteAction::make()
-                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
-                EditAction::make(),
+                FilamentActions::deleteWithPolicy(),
+                \Filament\Actions\EditAction::make(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\CustomerSubscription::class)),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(CustomerSubscription::class),
             ]);
     }
 }

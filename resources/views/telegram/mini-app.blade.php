@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartFit App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    @vite('resources/css/telegram/mini-app.css')
+    @vite(['resources/css/telegram/mini-app.css', 'resources/js/telegram/telegram-utils.js'])
 </head>
 <body>
 <div class="wrap">
@@ -57,7 +57,7 @@
                     <div class="smart-muted">Valid until</div>
                     <div id="subscription-end" class="smart-value" style="font-size:16px;font-weight:700;">-</div>
                 </div>
-                <div style="text-align:right;">
+                <div class="text-right">
                     <div class="smart-muted">Visits left</div>
                     <div id="visits-value" class="smart-value">-</div>
                 </div>
@@ -76,28 +76,28 @@
         </div>
 
         <div class="quick-actions">
-            <a href="{{ route('telegram.mini-app.my-subscriptions') }}" class="qa-btn" style="display:grid;place-items:center;text-decoration:none;" id="btn-my-subscriptions">My Pass</a>
-            <a href="{{ route('telegram.mini-app.subscriptions') }}" class="qa-btn" style="display:grid;place-items:center;text-decoration:none;">Subscriptions</a>
-            <button type="button" id="btn-show-qr" class="qa-btn" style="display:grid;place-items:center;text-decoration:none;">My QR</button>
+            <a href="{{ route('telegram.mini-app.my-subscriptions') }}" class="qa-btn" id="btn-my-subscriptions">My Pass</a>
+            <a href="{{ route('telegram.mini-app.subscriptions') }}" class="qa-btn">Subscriptions</a>
+            <button type="button" id="btn-show-qr" class="qa-btn">My QR</button>
         </div>
 
-        <div id="subscriptions-card" class="card hidden" style="margin-top:12px;">
+        <div id="subscriptions-card" class="card hidden mt-3">
             <div class="kpi-label">Active Subscriptions</div>
             <div id="subscriptions-empty" class="kpi-value">No active subscriptions</div>
             <ul id="subscriptions-list" class="subs-list hidden"></ul>
         </div>
 
-        <div id="qr-card" class="card hidden" style="margin-top:12px;">
+        <div id="qr-card" class="card hidden mt-3">
             <div class="kpi-label">Check-in QR</div>
             <div id="qr-svg" class="qr-svg-wrap"></div>
-            <div class="qr-progress-wrap" style="margin-top:10px;">
+            <div class="qr-progress-wrap mt-2">
                 <div id="qr-progress-fill" class="qr-progress-fill"></div>
             </div>
             <div id="qr-expire-text" class="qr-expire-text">Expires in: -</div>
-            <div id="qr-status" class="qr-status" style="margin-top:8px;"></div>
+            <div id="qr-status" class="qr-status mt-2"></div>
         </div>
 
-        <div class="card" style="margin-top:12px;">
+        <div class="card mt-3">
             <div class="kpi-label" id="schedule-label">My Schedule</div>
             <div id="schedule-empty" class="schedule-empty-text">No classes today</div>
             <div id="schedule-list" class="hidden"></div>
@@ -125,26 +125,7 @@
 </div>
 
 <script>
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-        tg.ready();
-        tg.expand();
-    }
-
-    const haptic = tg?.HapticFeedback;
-
-    function hapticSelection() { haptic?.selectionChanged(); }
-    function hapticSuccess() { haptic?.notificationOccurred('success'); }
-    function hapticError() { haptic?.notificationOccurred('error'); }
-    function hapticLight() { haptic?.impactOccurred('light'); }
-
-    function tgAlert(text) {
-        if (tg?.showAlert) {
-            tg.showAlert(text);
-        } else {
-            alert(text);
-        }
-    }
+    const tg = window.tg;
 
     const form = document.getElementById('link-form');
     const msg = document.getElementById('msg');
@@ -343,15 +324,6 @@
 
         subscriptionsList.classList.remove('hidden');
         subscriptionsEmpty.classList.add('hidden');
-    }
-
-    function escapeHtml(value) {
-        return String(value)
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#039;');
     }
 
     function formatSeconds(total) {
@@ -598,5 +570,6 @@
         tgAlert('Failed to initialize Mini App.');
     });
 </script>
+<x-telegram.bottom-nav active="home" />
 </body>
 </html>

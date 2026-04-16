@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Subscriptions</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    @vite('resources/css/telegram/mini-app.css')
+    @vite(['resources/css/telegram/mini-app.css', 'resources/js/telegram/telegram-utils.js'])
 </head>
 <body class="premium-subs">
 <div class="wrap">
@@ -22,29 +22,27 @@
 
     <div id="main-block" class="hidden">
         {{-- Header --}}
-        <div class="header" style="margin-bottom:14px;">
-            <a href="{{ route('telegram.mini-app.show') }}" class="back-link">← Back</a>
-            <div style="font-size:17px;font-weight:800;color:var(--tg-theme-text-color,#0f172a);">My Subscriptions</div>
-            <div style="width:60px;"></div>
+        <div class="header mb-4">
+            <div class="card-title">My Subscriptions</div>
         </div>
 
         {{-- Dropdown --}}
-        <div id="dropdown-wrap" class="hidden" style="margin-bottom:14px;">
+        <div id="dropdown-wrap" class="hidden mb-4">
             <select id="sub-select" class="sub-select"></select>
         </div>
 
         {{-- Empty state --}}
-        <div id="empty-state" class="hidden card" style="text-align:center;padding:32px 16px;">
-            <div style="font-size:40px;margin-bottom:12px;">📋</div>
-            <div style="font-size:16px;font-weight:700;margin-bottom:6px;">No subscriptions</div>
-            <div style="font-size:13px;color:var(--tg-theme-hint-color,#64748b);">You have no active, pending subscriptions.</div>
+        <div id="empty-state" class="hidden card text-center" style="padding:32px 16px;">
+            <div class="mb-3" style="font-size:40px;">📋</div>
+            <div class="mb-3" style="font-size:16px;font-weight:700;">No subscriptions</div>
+            <div class="hint-text">You have no active, pending subscriptions.</div>
         </div>
 
         {{-- Subscription card (innerHTML replaced by JS) --}}
         <div id="detail-card"></div>
 
         {{-- Attendance --}}
-        <div id="att-section" class="hidden" style="margin-top:14px;">
+        <div id="att-section" class="hidden mt-4">
             <div class="att-header">
                 <span class="att-title">Attendance</span>
             </div>
@@ -54,17 +52,13 @@
         </div>
     </div>
 
-    <div id="error-block" class="hidden card" style="text-align:center;padding:24px;">
-        <div id="error-msg" style="color:#991b1b;font-size:14px;font-weight:600;"></div>
+    <div id="error-block" class="hidden card text-center" style="padding:24px;">
+        <div id="error-msg" class="error-text"></div>
     </div>
 </div>
 
 <script>
-    const tg = window.Telegram?.WebApp;
-    if (tg) { tg.ready(); tg.expand(); }
-    const haptic = tg?.HapticFeedback;
-    function hapticSelection() { haptic?.selectionChanged(); }
-    function hapticError() { haptic?.notificationOccurred('error'); }
+    const tg = window.tg;
 
     const skeletonBlock = document.getElementById('skeleton-block');
     const mainBlock     = document.getElementById('main-block');
@@ -86,16 +80,6 @@
     const WEEK_DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat'];
 
     let allSubscriptions = [];
-
-    function escapeHtml(v) {
-        return String(v)
-            .replaceAll('&','&amp;').replaceAll('<','&lt;')
-            .replaceAll('>','&gt;').replaceAll('"','&quot;');
-    }
-
-    function formatMoney(v) {
-        return Number(v).toLocaleString('en-US') + ' UZS';
-    }
 
     function formatDate(str) {
         if (!str) return '—';
@@ -394,5 +378,6 @@
 
     loadSubscriptions();
 </script>
+<x-telegram.bottom-nav active="my-pass" />
 </body>
 </html>

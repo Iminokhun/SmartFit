@@ -5,8 +5,8 @@ namespace App\Filament\Resources\AssetEvents\Tables;
 use App\Enums\AssetEventType;
 use App\Enums\InventoryStatus;
 use App\Filament\Resources\AssetEvents\AssetEventResource;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
+use App\Filament\Support\FilamentActions;
+use App\Models\AssetEvent;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -75,10 +75,7 @@ class AssetEventsTable
                     ->visible(fn () => self::canManage()),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\AssetEvent::class)),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(AssetEvent::class),
             ]);
     }
 

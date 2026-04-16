@@ -65,6 +65,17 @@ Route::middleware(['force.telegram.https'])->prefix('telegram')->group(function 
         ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
         ->name('telegram.mini-app.my-visits');
 
+    Route::get('/mini-app/chat', [TelegramMiniAppController::class, 'chatPage'])
+        ->name('telegram.mini-app.chat');
+
+    Route::post('/mini-app/chat', [TelegramMiniAppController::class, 'chat'])
+        ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+        ->name('telegram.mini-app.chat.send');
+
+    Route::post('/mini-app/chat/photo', [TelegramMiniAppController::class, 'chatPhoto'])
+        ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+        ->name('telegram.mini-app.chat.photo');
+
     Route::get('/staff/scan', [TelegramStaffMiniAppController::class, 'show'])
         ->name('telegram.staff.scan.show');
 
