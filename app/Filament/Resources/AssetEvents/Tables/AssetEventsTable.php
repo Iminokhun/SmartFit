@@ -4,8 +4,9 @@ namespace App\Filament\Resources\AssetEvents\Tables;
 
 use App\Enums\AssetEventType;
 use App\Enums\InventoryStatus;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\AssetEvents\AssetEventResource;
+use App\Filament\Support\FilamentActions;
+use App\Models\AssetEvent;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -16,6 +17,7 @@ class AssetEventsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => AssetEventResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('event_date')
                     ->label('Date')
@@ -70,13 +72,18 @@ class AssetEventsTable
             ])
             ->recordActions([
                 EditAction::make()
-                    ->visible(fn () => auth()->user()?->role === 'admin'),
+                    ->visible(fn () => self::canManage()),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->role === 'admin'),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(AssetEvent::class),
             ]);
+    }
+
+    private static function canManage(): bool
+    {
+        $user = auth()->user();
+        $roleName = strtolower((string) ($user?->role?->name ?? ''));
+
+        return in_array($roleName, ['admin', 'manager'], true) || in_array((int) ($user?->role_id ?? 0), [1, 2], true);
     }
 }

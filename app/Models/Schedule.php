@@ -8,6 +8,7 @@ class Schedule extends Model
 {
     protected $fillable = [
         'activity_id',
+        'subscription_id',
         'trainer_id',
         'hall_id',
         'days_of_week',
@@ -45,14 +46,8 @@ class Schedule extends Model
         return $this->belongsTo(Hall::class);
     }
 
-    protected function timeRange(): \Illuminate\Database\Eloquent\Casts\Attribute
+    public function subscription()
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
-            get: fn () => sprintf(
-                '%s - %s',
-                \Carbon\Carbon::parse($this->start_time)->format('H:i'),
-                \Carbon\Carbon::parse($this->end_time)->format('H:i'),
-            ),
-        );
+        return $this->belongsTo(Subscription::class);
     }
 }

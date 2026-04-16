@@ -2,12 +2,12 @@
 
 namespace App\Filament\Resources\Expenses\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\DatePicker;
+use App\Filament\Resources\Expenses\ExpenseResource;
+use App\Filament\Support\FilamentActions;
+use App\Filament\Support\FilamentColumns;
+use App\Filament\Support\FilamentFilters;
+use App\Models\Expense;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
@@ -16,6 +16,7 @@ class ExpensesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => ExpenseResource::getUrl('view', ['record' => $record]))
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('category.name')
@@ -23,9 +24,7 @@ class ExpensesTable
                     ->searchable()
                     ->badge(),
 
-                TextColumn::make('amount')
-                    ->money('UZS')
-                    ->sortable(),
+                FilamentColumns::money('amount'),
 
                 TextColumn::make('expenses_date')
                     ->date()
@@ -54,31 +53,14 @@ class ExpensesTable
                     ->searchable()
                     ->preload(),
 
-                Filter::make('expenses_date')
-                    ->label('Date range')
-                    ->form([
-                        DatePicker::make('from')->label('From'),
-                        DatePicker::make('until')->label('Until'),
-                    ])
-                    ->query(function ($query, array $data) {
-                        return $query
-                            ->when(
-                                $data['from'] ?? null,
-                                fn ($q, $date) => $q->whereDate('expenses_date', '>=', $date)
-                            )
-                            ->when(
-                                $data['until'] ?? null,
-                                fn ($q, $date) => $q->whereDate('expenses_date', '<=', $date)
-                            );
-                    }),
+                FilamentFilters::dateRange('expenses_date', 'Date range'),
             ])
             ->recordActions([
-                EditAction::make(),
+                FilamentActions::editWithPolicy(),
+                FilamentActions::deleteWithPolicy(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(Expense::class),
             ]);
     }
 }

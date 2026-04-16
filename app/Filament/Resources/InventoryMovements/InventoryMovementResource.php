@@ -5,6 +5,7 @@ namespace App\Filament\Resources\InventoryMovements;
 use App\Filament\Resources\InventoryMovements\Pages\CreateInventoryMovement;
 use App\Filament\Resources\InventoryMovements\Pages\EditInventoryMovement;
 use App\Filament\Resources\InventoryMovements\Pages\ListInventoryMovements;
+use App\Filament\Resources\InventoryMovements\Pages\ViewInventoryMovement;
 use App\Filament\Resources\InventoryMovements\Schemas\InventoryMovementForm;
 use App\Filament\Resources\InventoryMovements\Tables\InventoryMovementsTable;
 use App\Models\InventoryMovement;
@@ -44,6 +45,7 @@ class InventoryMovementResource extends Resource
         return [
             'index' => ListInventoryMovements::route('/'),
             'create' => CreateInventoryMovement::route('/create'),
+            'view' => ViewInventoryMovement::route('/{record}'),
             'edit' => EditInventoryMovement::route('/{record}/edit'),
         ];
     }

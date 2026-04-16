@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Halls;
 use App\Filament\Resources\Halls\Pages\CreateHall;
 use App\Filament\Resources\Halls\Pages\EditHall;
 use App\Filament\Resources\Halls\Pages\ListHalls;
+use App\Filament\Resources\Halls\Pages\ViewHall;
 use App\Filament\Resources\Halls\Schemas\HallForm;
 use App\Filament\Resources\Halls\Tables\HallsTable;
 use App\Models\Hall;
@@ -44,6 +45,7 @@ class HallResource extends Resource
         return [
             'index' => ListHalls::route('/'),
             'create' => CreateHall::route('/create'),
+            'view' => ViewHall::route('/{record}'),
             'edit' => EditHall::route('/{record}/edit'),
         ];
     }

@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\Shifts\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\Shifts\ShiftResource;
+use App\Filament\Support\FilamentActions;
+use App\Models\Shift;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -15,6 +15,7 @@ class ShiftsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => ShiftResource::getUrl('view', ['record' => $record]))
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('staff.full_name')
@@ -42,12 +43,14 @@ class ShiftsTable
             ->filters([
                 SelectFilter::make('staff_id')
                     ->label('Trainer')
+                    ->multiple()
                     ->relationship('staff', 'full_name')
                     ->searchable()
                     ->preload(),
 
                 SelectFilter::make('day')
                     ->label('Day')
+                    ->multiple()
                     ->options([
                         'monday' => 'Monday',
                         'tuesday' => 'Tuesday',
@@ -57,23 +60,22 @@ class ShiftsTable
                         'saturday' => 'Saturday',
                         'sunday' => 'Sunday',
                     ])
-                    ->query(function ($query, $state) {
-                        if (! $state) {
+                    ->query(function ($query, array $data) {
+                        $day = $data['value'] ?? null;
+
+                        if (blank($day)) {
                             return $query;
                         }
 
-                        return $query->whereJsonContains('days_of_week', $state);
+                        return $query->whereJsonContains('days_of_week', $day);
                     }),
             ])
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make(),
+                FilamentActions::deleteWithPolicy(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(Shift::class),
             ]);
     }
 }
-

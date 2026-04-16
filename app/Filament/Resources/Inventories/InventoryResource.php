@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Inventories;
 use App\Filament\Resources\Inventories\Pages\CreateInventory;
 use App\Filament\Resources\Inventories\Pages\EditInventory;
 use App\Filament\Resources\Inventories\Pages\ListInventories;
+use App\Filament\Resources\Inventories\Pages\ViewInventory;
 use App\Filament\Resources\Inventories\Schemas\InventoryForm;
 use App\Filament\Resources\Inventories\Tables\InventoriesTable;
 use App\Models\Inventory;
@@ -45,6 +46,7 @@ class InventoryResource extends Resource
         return [
             'index' => ListInventories::route('/'),
             'create' => CreateInventory::route('/create'),
+            'view' => ViewInventory::route('/{record}'),
             'edit' => EditInventory::route('/{record}/edit'),
         ];
     }

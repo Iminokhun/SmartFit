@@ -17,10 +17,10 @@ class FinanceRevenueExpensesTrendChart extends ApexChartWidget
 
     public ?string $from = null;
     public ?string $until = null;
-    public ?int $activityId = null;
-    public ?string $paymentMethod = null;
-    public ?string $paymentStatus = null;
-    public ?int $expenseCategoryId = null;
+    public array $activityId = [];
+    public array $paymentMethod = [];
+    public array $paymentStatus = [];
+    public array $expenseCategoryId = [];
 
     protected function getOptions(): array
     {
@@ -33,9 +33,9 @@ class FinanceRevenueExpensesTrendChart extends ApexChartWidget
             ->join('subscriptions', 'subscriptions.id', '=', 'customer_subscriptions.subscription_id')
             ->whereBetween('payments.created_at', [$from, $until])
             ->whereIn('payments.status', $revenueStatuses)
-            ->when($this->paymentMethod, fn (Builder $query) => $query->where('payments.method', $this->paymentMethod))
-            ->when($this->paymentStatus, fn (Builder $query) => $query->where('payments.status', $this->paymentStatus))
-            ->when($this->activityId, fn (Builder $query) => $query->where('subscriptions.activity_id', $this->activityId))
+            ->when($this->paymentMethod, fn (Builder $query) => $query->whereIn('payments.method', $this->paymentMethod))
+            ->when($this->paymentStatus, fn (Builder $query) => $query->whereIn('payments.status', $this->paymentStatus))
+            ->when($this->activityId, fn (Builder $query) => $query->whereIn('subscriptions.activity_id', $this->activityId))
             ->groupBy(DB::raw('DATE(payments.created_at)'))
             ->orderBy('date')
             ->get()
@@ -44,7 +44,7 @@ class FinanceRevenueExpensesTrendChart extends ApexChartWidget
         $expenseRows = Expense::query()
             ->selectRaw('DATE(expenses.expenses_date) as date, SUM(expenses.amount) as total')
             ->whereBetween('expenses.expenses_date', [$from->toDateString(), $until->toDateString()])
-            ->when($this->expenseCategoryId, fn (Builder $query) => $query->where('expenses.category_id', $this->expenseCategoryId))
+            ->when($this->expenseCategoryId, fn (Builder $query) => $query->whereIn('expenses.category_id', $this->expenseCategoryId))
             ->groupBy(DB::raw('DATE(expenses.expenses_date)'))
             ->orderBy('date')
             ->get()
@@ -92,7 +92,13 @@ class FinanceRevenueExpensesTrendChart extends ApexChartWidget
             ],
             'xaxis' => [
                 'categories' => $labels,
-                'labels' => ['rotate' => -45],
+                'labels' => [
+                    'rotate' => -45,
+                    'hideOverlappingLabels' => true,
+                    'showDuplicates' => false,
+                    'trim' => true,
+                ],
+                'tickAmount' => min(30, count($labels)),
                 'axisBorder' => ['show' => false],
                 'axisTicks' => ['show' => false],
             ],
@@ -142,8 +148,8 @@ JS);
     private function resolveRevenueStatuses(): array
     {
         $allowed = ['paid', 'partial'];
-        if ($this->paymentStatus) {
-            return array_values(array_intersect($allowed, [$this->paymentStatus]));
+        if (!empty($this->paymentStatus)) {
+            return array_values(array_intersect($allowed, $this->paymentStatus));
         }
 
         return $allowed;

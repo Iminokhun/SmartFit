@@ -14,8 +14,8 @@ class FinancePendingFailedPieChart extends ApexChartWidget
 
     public ?string $from = null;
     public ?string $until = null;
-    public ?int $activityId = null;
-    public ?string $paymentMethod = null;
+    public array $activityId = [];
+    public array $paymentMethod = [];
 
     protected function getOptions(): array
     {
@@ -27,8 +27,8 @@ class FinancePendingFailedPieChart extends ApexChartWidget
             ->join('subscriptions', 'subscriptions.id', '=', 'customer_subscriptions.subscription_id')
             ->whereBetween('payments.created_at', [$from, $until])
             ->whereIn('payments.status', ['pending', 'failed'])
-            ->when($this->paymentMethod, fn (Builder $query) => $query->where('payments.method', $this->paymentMethod))
-            ->when($this->activityId, fn (Builder $query) => $query->where('subscriptions.activity_id', $this->activityId))
+            ->when($this->paymentMethod, fn (Builder $query) => $query->whereIn('payments.method', $this->paymentMethod))
+            ->when($this->activityId, fn (Builder $query) => $query->whereIn('subscriptions.activity_id', $this->activityId))
             ->groupBy('payments.status')
             ->get()
             ->keyBy('status');

@@ -50,13 +50,14 @@ class VisitsRelationManager extends RelationManager
             ])
             ->actions([
                 EditAction::make(),
-                DeleteAction::make(),
+                DeleteAction::make()
+                    ->visible(fn ($record) => auth()->user()?->can('delete', $record)),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->visible(fn () => auth()->user()?->can('deleteAny', \App\Models\Visit::class)),
                 ]),
             ]);
     }
 }
-

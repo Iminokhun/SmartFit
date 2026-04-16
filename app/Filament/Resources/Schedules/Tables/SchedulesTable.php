@@ -2,10 +2,11 @@
 
 namespace App\Filament\Resources\Schedules\Tables;
 
+use App\Filament\Resources\Schedules\ScheduleResource;
+use App\Filament\Support\FilamentActions;
+use App\Models\Schedule;
 use Carbon\Carbon;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
@@ -17,6 +18,7 @@ class SchedulesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => ScheduleResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('activity.name')
                     ->label('Activity')
@@ -47,6 +49,7 @@ class SchedulesTable
                 TextColumn::make('max_participants')
                     ->label('Participants')
             ])
+            ->defaultSort('id', 'desc')
             ->filters([
                 SelectFilter::make('day')
                     ->label('Day')
@@ -100,12 +103,10 @@ class SchedulesTable
                     ->icon('heroicon-o-clipboard-document-check')
                     ->url(fn ($record) => \App\Filament\Resources\Schedules\ScheduleResource::getUrl('attendance', ['record' => $record]))
                     ->color('success'),
-                DeleteAction::make(),
+                FilamentActions::deleteWithPolicy(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(Schedule::class),
             ]);
     }
 }

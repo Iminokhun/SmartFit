@@ -8,6 +8,7 @@ use App\Filament\Resources\Subscriptions\Pages\ListSubscriptions;
 use App\Filament\Resources\Subscriptions\Pages\ViewSubscription;
 use App\Filament\Resources\Subscriptions\Schemas\SubscriptionForm;
 use App\Filament\Resources\Subscriptions\Tables\SubscriptionsTable;
+use App\Filament\Resources\Subscriptions\Widgets\SubscriptionQuickStats;
 use App\Models\Subscription;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -37,6 +38,18 @@ class SubscriptionResource extends Resource
     {
         return [
             //
+        ];
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()->withCount('customers');
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            SubscriptionQuickStats::class,
         ];
     }
 

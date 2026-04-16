@@ -2,15 +2,18 @@
 
 namespace App\Filament\Resources\Staff\Tables;
 
-use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\Staff\StaffResource;
+use App\Filament\Support\FilamentColumns;
 use App\Models\Staff;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class StaffTable
@@ -35,22 +38,84 @@ class StaffTable
                     ->label('Experience')
                     ->suffix('yrs'),
 
-                TextColumn::make('salary')
-                    ->money('UZS')
-                    ->sortable(),
+                FilamentColumns::money('salary'),
 
-                TextColumn::make('status')
-                    ->badge()
-                    ->size('large')
-                    ->colors([
-                        'success' => 'active',
-                        'warning' => 'vacation',
-                        'gray'    => 'inactive',
-                    ])
-                    ->formatStateUsing(fn ($state) => ucfirst($state)),
+                FilamentColumns::statusBadge('status', [
+                    'active'   => 'success',
+                    'vacation' => 'warning',
+                    'inactive' => 'gray',
+                ])->size('large'),
             ])
             ->filters([
-                //
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->multiple()
+                    ->options([
+                        'active' => 'Active',
+                        'vacation' => 'Vacation',
+                        'inactive' => 'Inactive',
+                    ]),
+
+                SelectFilter::make('role_id')
+                    ->label('Role')
+                    ->relationship('role', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('salary_type')
+                    ->label('Salary Type')
+                    ->multiple()
+                    ->options([
+                        'fixed' => 'Fixed',
+                        'percent' => 'Percent',
+                        'per_session' => 'Per Session',
+                    ]),
+
+                Filter::make('specialization')
+                    ->form([
+                        Select::make('specialization')
+                            ->label('Specialization')
+                            ->options(fn () => Staff::query()
+                                ->whereNotNull('specialization')
+                                ->distinct()
+                                ->orderBy('specialization')
+                                ->pluck('specialization', 'specialization')
+                                ->all())
+                            ->searchable()
+                            ->preload(),
+                    ])
+                    ->query(function ($query, array $data) {
+                        if (blank($data['specialization'] ?? null)) {
+                            return $query;
+                        }
+
+                        return $query->where('specialization', $data['specialization']);
+                    }),
+
+                Filter::make('salary_range')
+                    ->label('Salary range')
+                    ->form([
+                        TextInput::make('salary_from')
+                            ->label('Salary from')
+                            ->numeric()
+                            ->minValue(0),
+                        TextInput::make('salary_to')
+                            ->label('Salary to')
+                            ->numeric()
+                            ->minValue(0),
+                    ])
+                    ->query(function ($query, array $data) {
+                        if (filled($data['salary_from'] ?? null)) {
+                            $query->where('salary', '>=', (float) $data['salary_from']);
+                        }
+
+                        if (filled($data['salary_to'] ?? null)) {
+                            $query->where('salary', '<=', (float) $data['salary_to']);
+                        }
+
+                        return $query;
+                    }),
             ])
             ->recordActions([
                 DeleteAction::make(),

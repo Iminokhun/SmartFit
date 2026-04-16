@@ -2,22 +2,21 @@
 
 namespace App\Filament\Resources\Payments\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\DatePicker;
+use App\Filament\Resources\Payments\PaymentResource;
+use App\Filament\Support\FilamentActions;
+use App\Filament\Support\FilamentColumns;
+use App\Filament\Support\FilamentFilters;
+use App\Models\Payment;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class PaymentsTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => PaymentResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('customer.full_name')
                     ->searchable()
@@ -32,85 +31,54 @@ class PaymentsTable
                     ->money('UZS')
                     ->sortable()
                     ->badge()
-                    ->color(fn ($record) =>
-                    $record->amount >= $record->customerSubscription?->subscription?->price
-                        ? 'success'
-                        : 'danger'
-                    ),
+                    ->color(fn ($record) => match ((string) $record->status) {
+                        'paid' => 'success',
+                        'partial' => 'warning',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    }),
 
-                TextColumn::make('remaining_amount')
+                TextColumn::make('remaining_debt')
                     ->label('Remaining')
                     ->money('UZS')
                     ->badge()
-                    ->state(function ($record) {
-                        $price = $record->customerSubscription?->subscription?->price ?? 0;
-
-                        return max(0, $price - $record->amount);
-                    })
-                    ->color(fn ($record) =>
-                    $record->amount >= $record->customerSubscription?->subscription?->price
-                        ? 'success'
-                        : 'warning'
-                    ),
+                    ->state(fn ($record) => (float) ($record->customerSubscription?->debt ?? 0))
+                    ->color(fn ($record) => ((float) ($record->customerSubscription?->debt ?? 0)) > 0 ? 'warning' : 'success'),
 
                 TextColumn::make('method')
                     ->searchable()
                     ->badge(),
 
-                TextColumn::make('status')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'paid' => 'success',
-                        'partial' => 'warning',
-                        'pending' => 'gray',
-                        'failed' => 'danger',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn ($state) => ucfirst((string) $state)),
-
+                FilamentColumns::statusBadge('status', [
+                    'paid'    => 'success',
+                    'partial' => 'warning',
+                    'pending' => 'gray',
+                    'failed'  => 'danger',
+                ]),
                 TextColumn::make('created_at')
                     ->label('Date')
                     ->dateTime()
                     ->sortable(),
             ])
+            ->defaultSort('id', 'desc')
             ->filters([
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options([
-                        'paid' => 'Paid',
+                        'paid'    => 'Paid',
                         'partial' => 'Partial',
                         'pending' => 'Pending',
-                        'failed' => 'Failed',
+                        'failed'  => 'Failed',
                     ]),
 
-                Filter::make('created_at')
-                    ->label('Date range')
-                    ->form([
-                        DatePicker::make('from')->label('From'),
-                        DatePicker::make('until')->label('Until'),
-                    ])
-                    ->query(function (Builder $query, array $data): void {
-                        if (! empty($data['from'])) {
-                            $query->whereDate('created_at', '>=', $data['from']);
-                        }
-
-                        if (! empty($data['until'])) {
-                            $query->whereDate('created_at', '<=', $data['until']);
-                        }
-                    }),
+                FilamentFilters::dateRange('created_at', 'Date range'),
             ])
             ->recordActions([
-                EditAction::make()
-                    ->visible(fn () => auth()->user()?->role === 'admin' || auth()->user()?->role === 'manager'),
-                DeleteAction::make()
-                    ->visible(fn () => auth()->user()?->role === 'admin' || auth()->user()?->role === 'manager'),
+                FilamentActions::editWithPolicy(),
+                FilamentActions::deleteWithPolicy(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->role === 'admin' || auth()->user()?->role === 'manager'),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(Payment::class),
             ]);
     }
 }
-

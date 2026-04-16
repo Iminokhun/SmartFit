@@ -12,7 +12,7 @@ class EditAssetEvent extends EditRecord
 
     public function mount(int|string $record): void
     {
-        abort_unless(auth()->user()?->role === 'admin', 403);
+        abort_unless($this->canManage(), 403);
 
         parent::mount($record);
     }
@@ -21,7 +21,15 @@ class EditAssetEvent extends EditRecord
     {
         return [
             DeleteAction::make()
-                ->visible(fn () => auth()->user()?->role === 'admin'),
+                ->visible(fn () => auth()->user()?->can('delete', $this->record)),
         ];
+    }
+
+    private function canManage(): bool
+    {
+        $user = auth()->user();
+        $roleName = strtolower((string) ($user?->role?->name ?? ''));
+
+        return in_array($roleName, ['admin', 'manager'], true) || in_array((int) ($user?->role_id ?? 0), [1, 2], true);
     }
 }

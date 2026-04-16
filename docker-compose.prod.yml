@@ -1,0 +1,100 @@
+services:
+
+    # PHP Service
+    gym-app:
+        build:
+            context: ./
+            target: production
+        image: gym/php:latest
+        container_name: gym-app
+        restart: always
+        environment:
+            SERVICE_NAME: app
+            SERVICE_TAGS: prod
+        working_dir: /var/www/default
+        volumes:
+            - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+            - storage_data:/var/www/default/storage
+        networks:
+            - gym-app-network
+        depends_on:
+            - gym-db
+
+    # PostgreSQL Service
+    gym-db:
+        image: postgres:16.1
+        container_name: gym-db
+        restart: always
+        environment:
+            PGPASSWORD: '${DB_PASSWORD}'
+            POSTGRES_DB: '${DB_DATABASE}'
+            POSTGRES_USER: '${DB_USERNAME}'
+            POSTGRES_PASSWORD: '${DB_PASSWORD}'
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        networks:
+            - gym-app-network
+
+    # Nginx Service
+    gym-webserver:
+        image: nginx:alpine
+        container_name: gym-webserver
+        restart: always
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+            - ./docker/nginx/logs:/var/log/nginx
+            - storage_data:/var/www/default/storage:ro
+            - certbot_www:/var/www/certbot:ro
+            - certbot_conf:/etc/letsencrypt:ro
+        networks:
+            - gym-app-network
+        depends_on:
+            - gym-app
+
+    # Queue Worker
+    gym-worker:
+        build:
+            context: ./
+            target: production
+        image: gym/php:latest
+        container_name: gym-worker
+        restart: always
+        working_dir: /var/www/default
+        volumes:
+            - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+            - storage_data:/var/www/default/storage
+        command: php artisan queue:work --queue=default --sleep=1 --tries=3 --timeout=120
+        networks:
+            - gym-app-network
+        depends_on:
+            - gym-app
+            - gym-db
+
+    # Certbot — получение и обновление SSL сертификатов
+    certbot:
+        image: certbot/certbot:latest
+        container_name: gym-certbot
+        volumes:
+            - certbot_www:/var/www/certbot
+            - certbot_conf:/etc/letsencrypt
+        entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+
+# Networks
+networks:
+    gym-app-network:
+        driver: bridge
+
+# Volumes
+volumes:
+    pgdata:
+        driver: local
+    storage_data:
+        driver: local
+    certbot_www:
+        driver: local
+    certbot_conf:
+        driver: local

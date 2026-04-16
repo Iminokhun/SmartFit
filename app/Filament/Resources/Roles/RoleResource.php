@@ -20,6 +20,8 @@ class RoleResource extends Resource
 {
     protected static ?string $model = Role::class;
 
+    protected static string|null|\UnitEnum $navigationGroup = 'Administration';
+    protected static ?int $navigationSort = 1;
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     public static function form(Schema $schema): Schema

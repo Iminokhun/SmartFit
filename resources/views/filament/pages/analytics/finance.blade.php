@@ -1,117 +1,52 @@
 <x-filament::page>
     @php
-        $cards = [
-            ['key' => 'revenue', 'label' => 'Revenue', 'value' => $metrics['revenue']],
-            ['key' => 'expenses', 'label' => 'Expenses', 'value' => $metrics['expenses']],
-            ['key' => 'netProfit', 'label' => 'Net Profit', 'value' => $metrics['netProfit']],
-            ['key' => 'debt', 'label' => 'Debt (AR)', 'value' => $metrics['debt']],
-            ['key' => 'collectionRate', 'label' => 'Collection Rate', 'value' => $metrics['collectionRate'], 'type' => 'percent'],
-        ];
-
-        $formatMoney = fn ($value) => number_format((float) $value, 2, '.', ' ');
         $formatDate = fn ($value) => \Carbon\Carbon::parse($value)->format('d.m.Y');
     @endphp
 
     <div class="analytics-subscriptions space-y-6">
-        <x-filament::section heading="Filters" class="analytics-panel analytics-filters">
-            <div class="analytics-grid analytics-grid--2">
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">Period</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="period">
-                            @foreach ($periodOptions as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">From</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input type="date" wire:model.live="from" :disabled="$period !== 'range'" />
-                    </x-filament::input.wrapper>
-                </div>
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">Until</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input type="date" wire:model.live="until" :disabled="$period !== 'range'" />
-                    </x-filament::input.wrapper>
-                </div>
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">Activity</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="activityId">
-                            <option value="">All</option>
-                            @foreach ($activities as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">Payment method</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="paymentMethod">
-                            <option value="">All</option>
-                            @foreach ($paymentMethods as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">Payment status</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="paymentStatus">
-                            <option value="">Paid + Partial</option>
-                            @foreach ($paymentStatuses as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-                <div>
-                    <div class="analytics-label text-sm text-gray-700">Expense category</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="expenseCategoryId">
-                            <option value="">All</option>
-                            @foreach ($expenseCategories as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-            </div>
+        <x-filament::section
+            heading="Filters"
+            icon="heroicon-o-funnel"
+            :description="$formatDate($from) . ' — ' . $formatDate($until)"
+            collapsible
+            collapsed
+            class="analytics-panel analytics-filters relative z-20 overflow-visible"
+        >
+            {{ $this->form }}
+
             <div class="analytics-note mt-3 text-xs text-gray-500">
-                Range: {{ $formatDate($from) }} - {{ $formatDate($until) }}. Revenue uses only paid and partial payments.
+                Revenue uses only paid and partial payments.
             </div>
         </x-filament::section>
 
         <x-filament::section heading="Finance KPI" class="analytics-panel analytics-kpi">
-            <div class="analytics-grid analytics-grid--2">
+            <div class="analytics-grid analytics-grid--2 analytics-grid--5">
                 @foreach ($cards as $card)
-                    <div class="analytics-kpi-card rounded-xl p-4">
-                        <div class="analytics-kpi-label text-xs uppercase tracking-wide text-gray-500">{{ $card['label'] }}</div>
-                        @php
-                            $delta = $kpiDeltas[$card['key']] ?? ['direction' => 'flat', 'percent' => 0];
-                        @endphp
-                        <div class="analytics-kpi-delta analytics-kpi-delta--{{ $delta['direction'] }}">
-                            @if ($delta['direction'] === 'up')
-                                ▲ +{{ $delta['percent'] }}%
-                            @elseif ($delta['direction'] === 'down')
-                                ▼ -{{ $delta['percent'] }}%
-                            @else
-                                ■ 0%
-                            @endif
-
+                    @php
+                        $isGood = match($card['sentiment']) {
+                            'positive' => $card['direction'] === 'up',
+                            'negative' => $card['direction'] === 'down',
+                            default    => true,
+                        };
+                        $accentMod = 'analytics-kpi-accent--' . $card['sentiment'];
+                        $badgeMod  = $isGood ? 'analytics-kpi-badge--good' : 'analytics-kpi-badge--bad';
+                    @endphp
+                    <div class="analytics-kpi-card">
+                        <div class="analytics-kpi-accent {{ $accentMod }}"></div>
+                        <div>
+                            <p class="analytics-kpi-label">{{ $card['label'] }}</p>
+                            <p class="analytics-kpi-value">
+                                {{ $card['value'] }}@if(!empty($card['suffix']))<span class="analytics-kpi-value-suffix">{{ $card['suffix'] }}</span>@endif
+                            </p>
                         </div>
-                        <div class="analytics-kpi-value mt-2 text-2xl font-semibold text-gray-900">
-                            @if (($card['type'] ?? null) === 'percent')
-                                {{ number_format((float) $card['value'], 1) }}%
-                            @else
-                                {{ $formatMoney($card['value']) }} UZS
-                            @endif
-                        </div>
+                        @if(!empty($card['delta']))
+                            <div class="analytics-kpi-delta-row">
+                                <span class="analytics-kpi-badge {{ $badgeMod }}">
+                                    {{ $card['direction'] === 'up' ? '↑' : '↓' }} {{ $card['delta'] }}
+                                </span>
+                                <span class="analytics-kpi-delta-label">{{ $card['deltaLabel'] }}</span>
+                            </div>
+                        @endif
                     </div>
                 @endforeach
             </div>
@@ -125,46 +60,43 @@
                     </div>
                     <div class="analytics-chart-wrap">
                         @livewire('App\\Filament\\Widgets\\Analytics\\FinanceRevenueExpensesTrendChart', [
-                            'from' => $from,
-                            'until' => $until,
-                            'activityId' => $activityId,
-                            'paymentMethod' => $paymentMethod,
-                            'paymentStatus' => $paymentStatus,
+                            'from'              => $from,
+                            'until'             => $until,
+                            'activityId'        => $activityId,
+                            'paymentMethod'     => $paymentMethod,
+                            'paymentStatus'     => $paymentStatus,
                             'expenseCategoryId' => $expenseCategoryId,
-                        ], key('finance-rev-exp-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . ($activityId ?? 'all') . '-' . ($paymentMethod ?? 'all') . '-' . ($paymentStatus ?? 'all') . '-' . ($expenseCategoryId ?? 'all')))
+                        ], key('finance-rev-exp-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . implode(',', (array) ($activityId ?? [])) . '-' . implode(',', (array) ($paymentMethod ?? [])) . '-' . implode(',', (array) ($paymentStatus ?? [])) . '-' . implode(',', (array) ($expenseCategoryId ?? []))))
                     </div>
                 </x-filament::section>
 
-                <x-filament::section heading="Collections vs Debt" class="analytics-panel analytics-chart">
+                <x-filament::section heading="Pending vs Failed Trend" class="analytics-panel analytics-chart">
                     <div class="analytics-note mb-3 text-xs text-gray-500">
-                        Collections are paid/partial payments. Debt is open receivable from active subscriptions.
+                        Daily count of pending and failed payments. Spikes may indicate billing issues or client payment problems.
                     </div>
                     <div class="analytics-chart-wrap">
-                        @livewire('App\\Filament\\Widgets\\Analytics\\FinanceCollectionsDebtTrendChart', [
-                            'from' => $from,
-                            'until' => $until,
-                            'activityId' => $activityId,
+                        @livewire('App\\Filament\\Widgets\\Analytics\\FinancePendingFailedTrendChart', [
+                            'from'          => $from,
+                            'until'         => $until,
+                            'activityId'    => $activityId,
                             'paymentMethod' => $paymentMethod,
-                            'paymentStatus' => $paymentStatus,
-                        ], key('finance-col-debt-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . ($activityId ?? 'all') . '-' . ($paymentMethod ?? 'all') . '-' . ($paymentStatus ?? 'all')))
+                        ], key('finance-pending-failed-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . implode(',', (array) ($activityId ?? [])) . '-' . implode(',', (array) ($paymentMethod ?? []))))
                     </div>
                 </x-filament::section>
             </div>
 
-            <div class="analytics-charts grid grid-cols-1 gap-6">
-                <x-filament::section heading="Expense by Category" class="analytics-panel analytics-chart">
-                    <div class="analytics-note mb-3 text-xs text-gray-500">
-                        Share of expenses by category in selected period.
-                    </div>
-                    <div class="analytics-chart-wrap">
-                        @livewire('App\\Filament\\Widgets\\Analytics\\FinanceExpenseCategoryPieChart', [
-                            'from' => $from,
-                            'until' => $until,
-                            'expenseCategoryId' => $expenseCategoryId,
-                        ], key('finance-expense-category-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . ($expenseCategoryId ?? 'all')))
-                    </div>
-                </x-filament::section>
-            </div>
+            <x-filament::section heading="Expense by Category" class="analytics-panel analytics-chart">
+                <div class="analytics-note mb-3 text-xs text-gray-500">
+                    Share of expenses by category in selected period.
+                </div>
+                <div class="analytics-chart-wrap">
+                    @livewire('App\\Filament\\Widgets\\Analytics\\FinanceExpenseCategoryPieChart', [
+                        'from'              => $from,
+                        'until'             => $until,
+                        'expenseCategoryId' => $expenseCategoryId,
+                    ], key('finance-expense-category-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . implode(',', (array) ($expenseCategoryId ?? []))))
+                </div>
+            </x-filament::section>
         @else
             <x-filament::section heading="No Data" class="analytics-panel analytics-chart">
                 <div class="analytics-empty">

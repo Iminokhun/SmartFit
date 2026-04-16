@@ -16,9 +16,9 @@ class SubscriptionsClientsSubscriptionsChart extends ApexChartWidget
 
     public ?string $from = null;
     public ?string $until = null;
-    public ?int $activityId = null;
-    public ?string $paymentMethod = null;
-    public ?string $paymentStatus = null;
+    public array $activityId = [];
+    public array $paymentMethod = [];
+    public array $paymentStatus = [];
 
     protected function getOptions(): array
     {
@@ -31,9 +31,9 @@ class SubscriptionsClientsSubscriptionsChart extends ApexChartWidget
             ->join('subscriptions', 'subscriptions.id', '=', 'customer_subscriptions.subscription_id')
             ->whereBetween('payments.created_at', [$from, $until])
             ->whereIn('payments.status', $revenueStatuses)
-            ->when($this->paymentMethod, fn (Builder $query) => $query->where('payments.method', $this->paymentMethod))
-            ->when($this->paymentStatus, fn (Builder $query) => $query->where('payments.status', $this->paymentStatus))
-            ->when($this->activityId, fn (Builder $query) => $query->where('subscriptions.activity_id', $this->activityId))
+            ->when($this->paymentMethod, fn (Builder $query) => $query->whereIn('payments.method', $this->paymentMethod))
+            ->when($this->paymentStatus, fn (Builder $query) => $query->whereIn('payments.status', $this->paymentStatus))
+            ->when($this->activityId, fn (Builder $query) => $query->whereIn('subscriptions.activity_id', $this->activityId))
             ->groupBy(DB::raw('DATE(payments.created_at)'))
             ->orderBy('date')
             ->get()
@@ -44,7 +44,7 @@ class SubscriptionsClientsSubscriptionsChart extends ApexChartWidget
             ->whereBetween('start_date', [$from->toDateString(), $until->toDateString()])
             ->when($this->activityId, function (Builder $query) {
                 $query->whereHas('subscription', function (Builder $subQuery) {
-                    $subQuery->where('activity_id', $this->activityId);
+                    $subQuery->whereIn('activity_id', $this->activityId);
                 });
             })
             ->groupBy(DB::raw('DATE(start_date)'))
@@ -118,8 +118,8 @@ class SubscriptionsClientsSubscriptionsChart extends ApexChartWidget
     private function resolveRevenueStatuses(): array
     {
         $allowed = ['paid', 'partial'];
-        if ($this->paymentStatus) {
-            return array_values(array_intersect($allowed, [$this->paymentStatus]));
+        if (!empty($this->paymentStatus)) {
+            return array_values(array_intersect($allowed, $this->paymentStatus));
         }
 
         return $allowed;

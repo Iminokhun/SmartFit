@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Visits\Tables;
 
+use App\Filament\Support\FilamentColumns;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -30,13 +31,11 @@ class VisitsTable
                     ->label('Visited at')
                     ->sortable(),
 
-                TextColumn::make('status')
-                    ->badge()
-                    ->colors([
-                        'success' => 'visited',
-                        'danger' => 'missed',
-                        'warning' => 'cancelled',
-                    ]),
+                FilamentColumns::statusBadge('status', [
+                    'visited'   => 'success',
+                    'missed'    => 'danger',
+                    'cancelled' => 'warning',
+                ]),
 
                 TextColumn::make('created_at')
                     ->dateTime()

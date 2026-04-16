@@ -1,110 +1,53 @@
 <x-filament::page>
     @php
-        $cards = [
-            ['label' => 'Revenue', 'value' => $metrics['revenue']],
-            ['label' => 'New subscriptions', 'value' => $metrics['newSubscriptions']],
-            ['label' => 'Active subscriptions', 'value' => $metrics['activeSubscriptions']],
-            ['label' => 'ARPU', 'value' => $metrics['arpu']],
-        ];
-
-        $formatMoney = fn ($value) => number_format((float) $value, 2);
+        $formatDate  = fn ($value) => \Carbon\Carbon::parse($value)->format('d.m.Y');
+        $formatMoney = fn ($value) => number_format((float) $value, 0, '.', ' ');
     @endphp
 
     <div class="analytics-subscriptions space-y-6">
-        <x-filament::section heading="Filters" class="analytics-panel analytics-filters">
-            <div class="analytics-grid analytics-grid--2">
-                <div>
-                    <div class="analytics-label text-sm font-medium text-gray-700">Period</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="period">
-                            @foreach ($periodOptions as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <div class="analytics-label text-sm font-medium text-gray-700">From</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input
-                            type="date"
-                            wire:model.live="from"
-                            :disabled="$period !== 'range'"
-                        />
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <div class="analytics-label text-sm font-medium text-gray-700">Until</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input
-                            type="date"
-                            wire:model.live="until"
-                            :disabled="$period !== 'range'"
-                        />
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <div class="analytics-label text-sm font-medium text-gray-700">Activity</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="activityId">
-                            <option value="">All</option>
-                            @foreach ($activities as $id => $name)
-                                <option value="{{ $id }}">{{ $name }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <div class="analytics-label text-sm font-medium text-gray-700">Payment method</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="paymentMethod">
-                            <option value="">All</option>
-                            @foreach ($paymentMethods as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-
-                <div>
-                    <div class="analytics-label text-sm font-medium text-gray-700">Payment status</div>
-                    <x-filament::input.wrapper>
-                        <x-filament::input.select wire:model.live="paymentStatus">
-                            <option value="">Paid + Partial</option>
-                            @foreach ($paymentStatuses as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </x-filament::input.select>
-                    </x-filament::input.wrapper>
-                </div>
-            </div>
+        <x-filament::section
+            heading="Filters"
+            icon="heroicon-o-funnel"
+            :description="$formatDate($from) . ' — ' . $formatDate($until)"
+            collapsible
+            collapsed
+            class="analytics-panel analytics-filters relative z-20 overflow-visible"
+        >
+            {{ $this->form }}
 
             <div class="analytics-note mt-3 text-xs text-gray-500">
-                Revenue is calculated from paid and partial payments only. <br> Range: {{ $rangeLabel }}
+                Revenue is calculated from paid and partial payments only. Range: {{ $rangeLabel }}
             </div>
         </x-filament::section>
 
         <x-filament::section heading="KPI" class="analytics-panel analytics-kpi">
-            <div class="analytics-note mb-3 text-xs text-gray-500">
-                Period: {{ $rangeLabel }}
-            </div>
-            <div class="analytics-grid analytics-grid--2">
+            <div class="analytics-grid analytics-grid--2 analytics-grid--4">
                 @foreach ($cards as $card)
-                    <div class="analytics-kpi-card rounded-xl p-4">
-                        <div class="analytics-kpi-label text-xs uppercase tracking-wide text-gray-500">
-                            {{ $card['label'] }}
+                    @php
+                        $isGood = match($card['sentiment']) {
+                            'positive' => $card['direction'] === 'up',
+                            'negative' => $card['direction'] === 'down',
+                            default    => true,
+                        };
+                        $accentMod = 'analytics-kpi-accent--' . $card['sentiment'];
+                        $badgeMod  = $isGood ? 'analytics-kpi-badge--good' : 'analytics-kpi-badge--bad';
+                    @endphp
+                    <div class="analytics-kpi-card">
+                        <div class="analytics-kpi-accent {{ $accentMod }}"></div>
+                        <div>
+                            <p class="analytics-kpi-label">{{ $card['label'] }}</p>
+                            <p class="analytics-kpi-value">
+                                {{ $card['value'] }}@if(!empty($card['suffix']))<span class="analytics-kpi-value-suffix">{{ $card['suffix'] }}</span>@endif
+                            </p>
                         </div>
-                        <div class="analytics-kpi-value mt-2 text-2xl font-semibold text-gray-900">
-                            @if (in_array($card['label'], ['Revenue', 'ARPU'], true))
-                                {{ $formatMoney($card['value']) }} UZS
-                            @else
-                                {{ number_format((int) $card['value']) }}
-                            @endif
-                        </div>
+                        @if(!empty($card['delta']))
+                            <div class="analytics-kpi-delta-row">
+                                <span class="analytics-kpi-badge {{ $badgeMod }}">
+                                    {{ $card['direction'] === 'up' ? '↑' : '↓' }} {{ $card['delta'] }}
+                                </span>
+                                <span class="analytics-kpi-delta-label">{{ $card['deltaLabel'] }}</span>
+                            </div>
+                        @endif
                     </div>
                 @endforeach
             </div>
@@ -119,7 +62,7 @@
                         'activityId' => $activityId,
                         'paymentMethod' => $paymentMethod,
                         'paymentStatus' => $paymentStatus,
-                    ], key('apex-revenue-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . ($activityId ?? 'all') . '-' . ($paymentMethod ?? 'all') . '-' . ($paymentStatus ?? 'all')))
+                    ], key('apex-revenue-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . implode(',', (array) ($activityId ?? [])) . '-' . implode(',', (array) ($paymentMethod ?? [])) . '-' . implode(',', (array) ($paymentStatus ?? []))))
                 </div>
             </x-filament::section>
 
@@ -131,48 +74,69 @@
                         'activityId' => $activityId,
                         'paymentMethod' => $paymentMethod,
                         'paymentStatus' => $paymentStatus,
-                    ], key('apex-clients-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . ($activityId ?? 'all') . '-' . ($paymentMethod ?? 'all') . '-' . ($paymentStatus ?? 'all')))
+                    ], key('apex-clients-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . implode(',', (array) ($activityId ?? [])) . '-' . implode(',', (array) ($paymentMethod ?? [])) . '-' . implode(',', (array) ($paymentStatus ?? []))))
                 </div>
             </x-filament::section>
         </div>
 
-        <x-filament::section heading="Top Plans" class="analytics-panel analytics-chart">
-            <div class="analytics-chart-wrap">
-                @livewire('App\\Filament\\Widgets\\Analytics\\SubscriptionsTopPlansChart', [
-                    'from' => $from,
-                    'until' => $until,
-                    'activityId' => $activityId,
-                    'paymentMethod' => $paymentMethod,
-                    'paymentStatus' => $paymentStatus,
-                ], key('apex-top-plans-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . ($activityId ?? 'all') . '-' . ($paymentMethod ?? 'all') . '-' . ($paymentStatus ?? 'all')))
+        <x-filament::section class="analytics-panel">
+            <div class="trainer-section-header">
+                <div class="trainer-section-left">
+                    <p class="trainer-section-eyebrow">Revenue</p>
+                    <h3 class="trainer-section-title">Top Plans</h3>
+                </div>
+                <span class="trainer-section-badge trainer-section-badge--blue">By Revenue</span>
             </div>
 
-            <div class="analytics-table-wrap overflow-x-auto">
-                <table class="analytics-table min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="analytics-table-head bg-gray-50">
-                        <tr>
-                            <th class="px-3 py-2 text-left font-medium text-gray-600">Subscription</th>
-                            <th class="px-3 py-2 text-right font-medium text-gray-600">Sales</th>
-                            <th class="px-3 py-2 text-right font-medium text-gray-600">Revenue</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 bg-white">
-                        @forelse ($topPlans as $row)
-                            <tr>
-                                <td class="px-3 py-2 text-gray-900">{{ $row->name }}</td>
-                                <td class="px-3 py-2 text-right text-gray-900">{{ number_format($row->sales) }}</td>
-                                <td class="px-3 py-2 text-right text-gray-900">
-                                    {{ $formatMoney($row->total) }} UZS
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="px-3 py-6 text-center text-gray-500">No data</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+            @if ($topPlans->isNotEmpty())
+                @php
+                    $chartNames   = $topPlans->pluck('name')->values()->toArray();
+                    $chartRevenue = $topPlans->pluck('total')->map(fn($v) => (float) $v)->values()->toArray();
+                @endphp
+                <div class="analytics-chart-wrap mb-4">
+                    @livewire('App\\Filament\\Widgets\\Analytics\\SubscriptionsTopPlansChart', [
+                        'chartNames'   => $chartNames,
+                        'chartRevenue' => $chartRevenue,
+                    ], key('apex-top-plans-' . md5(json_encode($chartNames))))
+                </div>
+
+                <div class="trainer-rows">
+                    @foreach ($topPlans as $row)
+                        @php
+                            $words    = preg_split('/[\s\-_]+/', trim($row->name));
+                            $initials = strtoupper(substr($words[0] ?? '', 0, 1) . (isset($words[1]) ? substr($words[1], 0, 1) : ''));
+                        @endphp
+                        <div class="trainer-row">
+                            <div class="trainer-row-left">
+                                <div class="trainer-avatar trainer-avatar--blue">{{ $initials }}</div>
+                                <div>
+                                    <p class="trainer-name">{{ $row->name }}</p>
+                                    <div class="trainer-meta">
+                                        <span>{{ $row->activity_name }}</span>
+                                        <span class="trainer-meta-dot"></span>
+                                        <span><span class="trainer-meta-val">{{ number_format((int) $row->sales) }}</span> Sales</span>
+                                        <span class="trainer-meta-dot"></span>
+                                        <span>Avg <span class="trainer-meta-val">{{ $formatMoney($row->avg_price) }}</span> UZS</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="trainer-row-right">
+                                <span class="trainer-fill-rate" style="font-size:1.1rem">
+                                    {{ $formatMoney($row->total) }}<span class="trainer-fill-rate-suffix"> UZS</span>
+                                </span>
+                                <div style="display:flex;align-items:center;gap:0.5rem">
+                                    <div class="trainer-bar-track" style="flex:1">
+                                        <div class="trainer-bar-fill trainer-bar-fill--blue" style="width: {{ min((float) $row->share, 100) }}%"></div>
+                                    </div>
+                                    <span style="font-size:0.7rem;color:#64748b;flex-shrink:0;width:2.5rem;text-align:right">{{ $row->share }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="trainer-empty">No data for selected period</div>
+            @endif
         </x-filament::section>
     </div>
 </x-filament::page>

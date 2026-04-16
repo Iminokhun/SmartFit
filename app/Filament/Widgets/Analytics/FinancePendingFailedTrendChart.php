@@ -2,7 +2,6 @@
 
 namespace App\Filament\Widgets\Analytics;
 
-use App\Models\CustomerSubscription;
 use App\Models\Payment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,55 +9,47 @@ use Illuminate\Support\Facades\DB;
 use Filament\Support\RawJs;
 use Leandrocfe\FilamentApexCharts\Widgets\ApexChartWidget;
 
-class FinanceCollectionsDebtTrendChart extends ApexChartWidget
+class FinancePendingFailedTrendChart extends ApexChartWidget
 {
-    protected static ?string $chartId = 'financeCollectionsDebtTrendChart';
+    protected static ?string $chartId = 'financePendingFailedTrendChart';
     protected static ?string $heading = null;
 
     public ?string $from = null;
     public ?string $until = null;
-    public ?int $activityId = null;
-    public ?string $paymentMethod = null;
-    public ?string $paymentStatus = null;
+    public array $activityId = [];
+    public array $paymentMethod = [];
 
     protected function getOptions(): array
     {
         [$from, $until] = $this->resolveDateRange();
-        $revenueStatuses = $this->resolveRevenueStatuses();
 
-        $collectionRows = Payment::query()
-            ->selectRaw('DATE(payments.created_at) as date, SUM(payments.amount) as total')
+        $rows = Payment::query()
+            ->selectRaw('DATE(payments.created_at) as date, payments.status, COUNT(*) as total')
             ->join('customer_subscriptions', 'customer_subscriptions.id', '=', 'payments.customer_subscription_id')
             ->join('subscriptions', 'subscriptions.id', '=', 'customer_subscriptions.subscription_id')
             ->whereBetween('payments.created_at', [$from, $until])
-            ->whereIn('payments.status', $revenueStatuses)
-            ->when($this->paymentMethod, fn (Builder $query) => $query->where('payments.method', $this->paymentMethod))
-            ->when($this->paymentStatus, fn (Builder $query) => $query->where('payments.status', $this->paymentStatus))
-            ->when($this->activityId, fn (Builder $query) => $query->where('subscriptions.activity_id', $this->activityId))
-            ->groupBy(DB::raw('DATE(payments.created_at)'))
+            ->whereIn('payments.status', ['pending', 'failed'])
+            ->when($this->paymentMethod, fn (Builder $query) => $query->whereIn('payments.method', $this->paymentMethod))
+            ->when($this->activityId, fn (Builder $query) => $query->whereIn('subscriptions.activity_id', $this->activityId))
+            ->groupBy(DB::raw('DATE(payments.created_at)'), 'payments.status')
             ->orderBy('date')
-            ->get()
-            ->keyBy('date');
+            ->get();
+
+        $map = [];
+        foreach ($rows as $row) {
+            $map[$row->date][$row->status] = (int) $row->total;
+        }
 
         $labels = [];
-        $collectionSeries = [];
-        $debtSeries = [];
+        $pendingSeries = [];
+        $failedSeries = [];
+
         $cursor = $from->copy();
         while ($cursor->lte($until)) {
             $date = $cursor->toDateString();
             $labels[] = $cursor->format('M d');
-            $collectionSeries[] = (float) ($collectionRows[$date]->total ?? 0);
-
-            $debtSeries[] = (float) CustomerSubscription::query()
-                ->whereDate('start_date', '<=', $date)
-                ->whereDate('end_date', '>=', $date)
-                ->when($this->activityId, function (Builder $query) {
-                    $query->whereHas('subscription', function (Builder $subQuery) {
-                        $subQuery->where('activity_id', $this->activityId);
-                    });
-                })
-                ->sum('debt');
-
+            $pendingSeries[] = $map[$date]['pending'] ?? 0;
+            $failedSeries[] = $map[$date]['failed'] ?? 0;
             $cursor->addDay();
         }
 
@@ -71,10 +62,10 @@ class FinanceCollectionsDebtTrendChart extends ApexChartWidget
                 'foreColor' => '#64748b',
             ],
             'series' => [
-                ['name' => 'Collections', 'data' => $collectionSeries],
-                ['name' => 'Debt', 'data' => $debtSeries],
+                ['name' => 'Pending', 'data' => $pendingSeries],
+                ['name' => 'Failed', 'data' => $failedSeries],
             ],
-            'colors' => ['#1d4ed8', '#dc2626'],
+            'colors' => ['#f59e0b', '#dc2626'],
             'dataLabels' => ['enabled' => false],
             'stroke' => ['curve' => 'smooth', 'width' => 3],
             'grid' => [
@@ -83,9 +74,20 @@ class FinanceCollectionsDebtTrendChart extends ApexChartWidget
             ],
             'xaxis' => [
                 'categories' => $labels,
-                'labels' => ['rotate' => -45],
+                'labels' => [
+                    'rotate' => -45,
+                    'hideOverlappingLabels' => true,
+                    'showDuplicates' => false,
+                    'trim' => true,
+                ],
+                'tickAmount' => min(30, count($labels)),
                 'axisBorder' => ['show' => false],
                 'axisTicks' => ['show' => false],
+            ],
+            'yaxis' => [
+                'min' => 0,
+                'forceNiceScale' => false,
+                'tickAmount' => 4,
             ],
             'tooltip' => ['shared' => true, 'intersect' => false],
             'legend' => [
@@ -103,14 +105,14 @@ class FinanceCollectionsDebtTrendChart extends ApexChartWidget
     yaxis: {
         labels: {
             formatter: function (value) {
-                return Number(value).toLocaleString('en-US');
+                return Math.round(value);
             }
         }
     },
     tooltip: {
         y: {
             formatter: function (value) {
-                return Number(value).toLocaleString('en-US') + ' UZS';
+                return Math.round(value) + ' payments';
             }
         }
     }
@@ -128,15 +130,5 @@ JS);
         }
 
         return [$from->startOfDay(), $until->endOfDay()];
-    }
-
-    private function resolveRevenueStatuses(): array
-    {
-        $allowed = ['paid', 'partial'];
-        if ($this->paymentStatus) {
-            return array_values(array_intersect($allowed, [$this->paymentStatus]));
-        }
-
-        return $allowed;
     }
 }

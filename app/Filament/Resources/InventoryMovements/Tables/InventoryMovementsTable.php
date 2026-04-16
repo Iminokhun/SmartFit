@@ -2,8 +2,9 @@
 
 namespace App\Filament\Resources\InventoryMovements\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\InventoryMovements\InventoryMovementResource;
+use App\Filament\Support\FilamentActions;
+use App\Models\InventoryMovement;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -14,6 +15,7 @@ class InventoryMovementsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => InventoryMovementResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('inventory.name')
                     ->label('Inventory')
@@ -52,13 +54,18 @@ class InventoryMovementsTable
             ])
             ->recordActions([
                 EditAction::make()
-                    ->visible(fn () => auth()->user()?->role === 'admin'),
+                    ->visible(fn () => self::canManage()),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn () => auth()->user()?->role === 'admin'),
-                ]),
+                FilamentActions::bulkDeleteWithPolicy(InventoryMovement::class),
             ]);
+    }
+
+    private static function canManage(): bool
+    {
+        $user = auth()->user();
+        $roleName = strtolower((string) ($user?->role?->name ?? ''));
+
+        return in_array($roleName, ['admin', 'manager'], true) || in_array((int) ($user?->role_id ?? 0), [1, 2], true);
     }
 }
