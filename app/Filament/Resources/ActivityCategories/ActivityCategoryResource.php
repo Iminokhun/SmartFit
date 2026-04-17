@@ -19,11 +19,12 @@ use Filament\Tables\Table;
 class ActivityCategoryResource extends Resource
 {
     protected static ?string $model = ActivityCategory::class;
-    protected static string|null|\UnitEnum $navigationGroup = 'Activities';
-    protected static ?int $navigationSort = 2;
+    protected static string|null|\UnitEnum $navigationGroup = 'Customers';
+    protected static ?int $navigationSort = 5;
+    protected static ?string $navigationLabel = 'Activity Categories';
     protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-tag';
 
-//    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+//
 
     public static function form(Schema $schema): Schema
     {

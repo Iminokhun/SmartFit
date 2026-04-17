@@ -58,18 +58,35 @@ services:
 
     #Node Service
     gym-node:
-        image: node:20-alpine
+        image: node:20.19-alpine
         container_name: gym-node
         working_dir: /var/www/default
         volumes:
             - ./:/var/www/default
-        command: /bin/sh -c "npm install && npm run dev"
+        command: /bin/sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
         ports:
-            - "3000:3000"
+            - "5173:5173"
         networks:
             - gym-app-network
         depends_on:
             - gym-app
+
+    #Queue Worker Service
+    gym-worker:
+        build: ./
+        image: gym/php
+        container_name: gym-worker
+        restart: unless-stopped
+        working_dir: /var/www/default
+        volumes:
+            - ./:/var/www/default
+            - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+        command: php artisan queue:work --queue=default --sleep=1 --tries=3 --timeout=120
+        networks:
+            - gym-app-network
+        depends_on:
+            - gym-app
+            - gym-db
 
     #Mailhog
     gym-mailhog:

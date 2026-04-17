@@ -11,6 +11,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use App\Models\Staff;
+use App\Models\TelegramStaffLink;
 
 
 class User extends Authenticatable implements FilamentUser
@@ -69,7 +70,16 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->role_id == 1;
+        if ($this->staff && strtolower((string) $this->staff->status) === 'inactive') {
+            return false;
+        }
+
+        return match ($panel->getId()) {
+            'admin' => $this->hasRole('admin') || $this->role_id === 1,
+            'manager' => $this->hasRole('manager', 'admin') || in_array($this->role_id, [1, 6], true),
+            'trainer' => $this->hasRole('trainer', 'admin') || $this->role_id === 1,
+            default => false,
+        };
     }
 
     public function staff()
@@ -80,5 +90,21 @@ class User extends Authenticatable implements FilamentUser
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function telegramStaffLink()
+    {
+        return $this->hasOne(TelegramStaffLink::class);
+    }
+
+    private function hasRole(string ...$names): bool
+    {
+        $roleName = strtolower((string) ($this->role?->name ?? ''));
+
+        if ($roleName === '') {
+            return false;
+        }
+
+        return in_array($roleName, array_map('strtolower', $names), true);
     }
 }

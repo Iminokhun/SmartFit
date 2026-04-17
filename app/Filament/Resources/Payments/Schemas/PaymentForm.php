@@ -44,19 +44,20 @@ class PaymentForm
                         $sub = CustomerSubscription::with('subscription')
                             ->find($state);
 
-                        if ($sub && $sub->subscription) {
-                            $set('amount', $sub->subscription->price);
+                        if ($sub) {
+                            $set('amount', $sub->finalPrice());
+                            $set('status', 'paid');
                         }
                     }),
 
                 Placeholder::make('subscription_price')
-                    ->label('Subscription Price')
+                    ->label('Final Price')
                     ->content(function ( $get) {
                         $sub = CustomerSubscription::with('subscription')
                             ->find($get('customer_subscription_id'));
 
-                        return $sub?->subscription
-                            ? number_format($sub->subscription->price, 2)
+                        return $sub
+                            ? number_format($sub->finalPrice(), 2)
                             : '-';
                     })
                     ->reactive(),
@@ -75,32 +76,58 @@ class PaymentForm
                                     return;
                                 }
 
-                                $price = $sub->subscription->price;
-                                $min = $price * 0.5;
-                                $max = $price;
+                                $price = $sub->finalPrice();
+                                $half = round($price / 2, 2);
+                                $amount = round((float) $value, 2);
 
-                                if ($value < $min) {
-                                    $fail("Minimum payment is 50%: {$min}");
-                                }
-
-                                if ($value > $max) {
-                                    $fail("Amount cannot exceed full price: {$max}");
+                                if ($amount !== round($price, 2) && $amount !== $half) {
+                                    $fail("Amount must be either 50% ({$half}) or full price ({$price}).");
                                 }
                             };
                         },
                     ])
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                        $sub = CustomerSubscription::with('subscription')
+                            ->find($get('customer_subscription_id'));
+
+                        if (! $sub || $state === null) {
+                            return;
+                        }
+
+                        $price = $sub->finalPrice();
+                        $half = round($price / 2, 2);
+                        $amount = round((float) $state, 2);
+
+                        if ($amount === round($price, 2)) {
+                            $set('status', 'paid');
+                        } elseif ($amount === $half) {
+                            $set('status', 'partial');
+                        }
+                    })
                     ->helperText(function ($get) {
                         $sub = CustomerSubscription::with('subscription')
                             ->find($get('customer_subscription_id'));
 
-                        if (! $sub || ! $sub->subscription) {
+                        if (! $sub) {
                             return null;
                         }
 
-                        $price = $sub->subscription->price;
+                        $price = (float) $sub->finalPrice();
+                        $half = round($price / 2, 2);
 
-                        return "Allowed range: min " . ($price * 0.5) . " — max {$price}";
+                        return "Allowed: 50% ({$half}) or full ({$price})";
                     }),
+
+                Select::make('status')
+                    ->options([
+                        'paid' => 'Paid',
+                        'partial' => 'Partial',
+                        'pending' => 'Pending',
+                        'failed' => 'Failed',
+                    ])
+                    ->default('paid')
+                    ->required(),
 
                 Select::make('method')
                     ->options(\App\Enums\PaymentMethod::options())

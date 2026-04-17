@@ -5,6 +5,7 @@ namespace App\Filament\Resources\InventoryMovements;
 use App\Filament\Resources\InventoryMovements\Pages\CreateInventoryMovement;
 use App\Filament\Resources\InventoryMovements\Pages\EditInventoryMovement;
 use App\Filament\Resources\InventoryMovements\Pages\ListInventoryMovements;
+use App\Filament\Resources\InventoryMovements\Pages\ViewInventoryMovement;
 use App\Filament\Resources\InventoryMovements\Schemas\InventoryMovementForm;
 use App\Filament\Resources\InventoryMovements\Tables\InventoryMovementsTable;
 use App\Models\InventoryMovement;
@@ -18,7 +19,9 @@ class InventoryMovementResource extends Resource
 {
     protected static ?string $model = InventoryMovement::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|null|\UnitEnum $navigationGroup = 'Inventories';
+    protected static ?int $navigationSort = 2;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowsUpDown;
 
     public static function form(Schema $schema): Schema
     {
@@ -42,6 +45,7 @@ class InventoryMovementResource extends Resource
         return [
             'index' => ListInventoryMovements::route('/'),
             'create' => CreateInventoryMovement::route('/create'),
+            'view' => ViewInventoryMovement::route('/{record}'),
             'edit' => EditInventoryMovement::route('/{record}/edit'),
         ];
     }

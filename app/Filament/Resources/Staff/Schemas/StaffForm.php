@@ -3,8 +3,10 @@
 namespace App\Filament\Resources\Staff\Schemas;
 
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -36,7 +38,13 @@ class StaffForm
                             ->relationship('role', 'name')
                             ->preload()
                             ->searchable()
-                            ->required(),
+                            ->required()
+                            ->createOptionForm([
+                                    TextInput::make('name')
+                                        ->maxLength(255)
+                                        ->required()
+                            ]
+                            ),
 
 
                         TextInput::make('phone')
@@ -46,6 +54,15 @@ class StaffForm
                         TextInput::make('email')
                             ->email()
                             ->nullable(),
+
+                        Select::make('user_id')
+                            ->label('Linked user')
+                            ->relationship('user', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->helperText('Required for manager personal page and account linkage.'),
 
                         FileUpload::make('photo')
                             ->image()
@@ -73,6 +90,35 @@ class StaffForm
                             ->numeric()
                             ->minValue(10)
                             ->required(),
+
+                        Repeater::make('shifts')
+                            ->relationship('shifts')
+                            ->schema([
+                                Select::make('days_of_week')
+                                    ->options([
+                                        'monday' => 'Monday',
+                                        'tuesday' => 'Tuesday',
+                                        'wednesday' => 'Wednesday',
+                                        'thursday' => 'Thursday',
+                                        'friday' => 'Friday',
+                                        'saturday' => 'Saturday',
+                                    ])
+                                    ->multiple()
+                                    ->minItems(1)
+                                    ->maxItems(6)
+                                    ->required(),
+
+                                TimePicker::make('start_time')
+                                    ->seconds(false)
+                                    ->required(),
+
+                                TimePicker::make('end_time')
+                                    ->seconds(false)
+                                    ->required(),
+                            ])
+                            ->columns(3)
+                            ->columnSpanFull()
+                            ->grid(1),
                     ]),
             ]);
     }

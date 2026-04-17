@@ -9,10 +9,20 @@ class CustomerSubscription extends Model
     protected $fillable = [
         'customer_id',
         'subscription_id',
+        'agreed_price',
         'start_date',
         'end_date',
         'remaining_visits',
         'status',
+        'paid_amount',
+        'debt',
+        'payment_status',
+    ];
+
+    protected $casts = [
+        'agreed_price' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
+        'debt' => 'decimal:2',
     ];
 
     public function payments()
@@ -28,5 +38,48 @@ class CustomerSubscription extends Model
     public function subscription()
     {
         return $this->belongsTo(Subscription::class);
+    }
+
+    public function checkins()
+    {
+        return $this->hasMany(CustomerCheckin::class);
+    }
+
+    public function finalPrice(): float
+    {
+        if ($this->agreed_price !== null) {
+            return (float) $this->agreed_price;
+        }
+
+        return $this->subscription?->finalPrice() ?? 0.0;
+    }
+
+    public function recalculatePaymentSummary(): void
+    {
+        $this->loadMissing('subscription');
+
+        $finalPrice = $this->finalPrice();
+        $paidAmount = (float) $this->payments()
+            ->whereIn('status', ['paid', 'partial'])
+            ->sum('amount');
+
+        $paidAmount = round($paidAmount, 2);
+        $debt = max(0, round($finalPrice - $paidAmount, 2));
+
+        if ($finalPrice <= 0) {
+            $paymentStatus = 'paid';
+        } elseif ($paidAmount >= $finalPrice) {
+            $paymentStatus = 'paid';
+        } elseif ($paidAmount > 0) {
+            $paymentStatus = 'partial';
+        } else {
+            $paymentStatus = 'unpaid';
+        }
+
+        $this->forceFill([
+            'paid_amount' => $paidAmount,
+            'debt' => $debt,
+            'payment_status' => $paymentStatus,
+        ])->saveQuietly();
     }
 }

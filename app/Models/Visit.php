@@ -9,6 +9,7 @@ class Visit extends Model
     protected $fillable = [
         'customer_id',
         'schedule_id',
+        'occurrence_id',
         'trainer_id',
         'visited_at',
         'status',
@@ -22,6 +23,11 @@ class Visit extends Model
     public function schedule()
     {
         return $this->belongsTo(Schedule::class);
+    }
+
+    public function occurrence()
+    {
+        return $this->belongsTo(ScheduleOccurrence::class, 'occurrence_id');
     }
 
     public function staff()

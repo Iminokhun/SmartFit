@@ -14,6 +14,8 @@ class Payment extends Model
         'method',
         'status',
         'description',
+        'telegram_payment_charge_id',
+        'provider_payment_charge_id',
     ];
 
     protected $casts = [
