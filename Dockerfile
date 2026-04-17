@@ -1,17 +1,22 @@
 # ═══════════════════════════════════════════
-# STAGE 1: Node — сборка JS/CSS assets
-# ═══════════════════════════════════════════
-# ═══════════════════════════════════════════
-# STAGE 0: Composer — установка PHP зависимостей
+# STAGE 0: Composer — PHP зависимости
 # ═══════════════════════════════════════════
 FROM php:8.4-alpine AS composer-builder
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Нужны для некоторых composer пакетов
+RUN apk add --no-cache git unzip
+
 WORKDIR /app
 
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-interaction --ignore-platform-reqs
+RUN composer install \
+    --no-dev \
+    --no-scripts \
+    --no-interaction \
+    --ignore-platform-reqs \
+    --optimize-autoloader
 
 
 # ═══════════════════════════════════════════
@@ -21,26 +26,25 @@ FROM node:20-alpine AS node-builder
 
 WORKDIR /app
 
-# Берём vendor/ из composer-builder (включая vendor/livewire/flux)
+# vendor/ нужен для Flux CSS (vendor/livewire/flux/dist/flux.css)
 COPY --from=composer-builder /app/vendor ./vendor
 
-# package файлы — кэш слоя
+# Кэш слоя: package файлы отдельно от исходников
 COPY package*.json ./
 RUN npm ci
 
-# Копируем исходники и собираем assets
+# Копируем исходники и собираем
 COPY . .
 RUN npm run build
 
 
 # ═══════════════════════════════════════════
-# STAGE 2: PHP Production
+# STAGE 2: Production
 # ═══════════════════════════════════════════
 FROM php:8.4-fpm-alpine AS production
 
-# Системные зависимости (alpine — минимальный набор)
+# Системные зависимости
 RUN apk add --no-cache \
-    git \
     unzip \
     postgresql-client \
     libpng-dev \
@@ -62,36 +66,38 @@ RUN chmod +x /usr/local/bin/install-php-extensions \
         intl \
         opcache
 
-# OPcache настройки для production
-RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini
-
-# Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# OPcache для production
+RUN { \
+    echo "opcache.enable=1"; \
+    echo "opcache.memory_consumption=256"; \
+    echo "opcache.max_accelerated_files=20000"; \
+    echo "opcache.validate_timestamps=0"; \
+} >> /usr/local/etc/php/conf.d/opcache.ini
 
 WORKDIR /var/www/default
 
-# Сначала только composer файлы — слой кэшируется если код не менялся
-COPY composer.json composer.lock ./
-RUN composer install \
-    --no-dev \
-    --optimize-autoloader \
-    --no-scripts \
-    --no-interaction
+# vendor/ из Stage 0 (не пересобираем)
+COPY --from=composer-builder /app/vendor ./vendor
 
-# Копируем исходники Laravel
+# Исходники Laravel
 COPY . .
 
-# Берём скомпилированные assets из Stage 1 (Node не попадает в образ)
+# Скомпилированные assets из Stage 1
 COPY --from=node-builder /app/public/build ./public/build
 
-# Права для Laravel
-RUN chown -R www-data:www-data storage bootstrap/cache \
+# Создаём все нужные папки Laravel и выставляем права
+RUN mkdir -p \
+        storage/app/public \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/framework/testing \
+        storage/logs \
+        bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Переключаемся на non-root пользователя
+# Non-root пользователь
 USER www-data
 
 CMD ["/usr/local/sbin/php-fpm"]
