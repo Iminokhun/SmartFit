@@ -3,9 +3,18 @@
 # ═══════════════════════════════════════════
 FROM node:20-alpine AS node-builder
 
+# Нужен PHP/Composer для vendor/livewire/flux (Flux CSS)
+RUN apk add --no-cache php83 php83-phar php83-mbstring php83-openssl php83-iconv php83-json php83-dom php83-xml php83-xmlwriter php83-tokenizer
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 WORKDIR /app
 
-# Сначала только package файлы — слой кэшируется
+# Сначала только composer файлы — кэш слоя
+COPY composer.json composer.lock ./
+RUN PHP=/usr/bin/php83 composer install --no-dev --no-scripts --no-interaction --ignore-platform-reqs
+
+# package файлы — кэш слоя
 COPY package*.json ./
 RUN npm ci
 
