@@ -1,18 +1,28 @@
 # ═══════════════════════════════════════════
 # STAGE 1: Node — сборка JS/CSS assets
 # ═══════════════════════════════════════════
-FROM node:20-alpine AS node-builder
-
-# Нужен PHP/Composer для vendor/livewire/flux (Flux CSS)
-RUN apk add --no-cache php83 php83-phar php83-mbstring php83-openssl php83-iconv php83-json php83-dom php83-xml php83-xmlwriter php83-tokenizer
+# ═══════════════════════════════════════════
+# STAGE 0: Composer — установка PHP зависимостей
+# ═══════════════════════════════════════════
+FROM php:8.4-alpine AS composer-builder
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# Сначала только composer файлы — кэш слоя
 COPY composer.json composer.lock ./
-RUN PHP=/usr/bin/php83 composer install --no-dev --no-scripts --no-interaction --ignore-platform-reqs
+RUN composer install --no-dev --no-scripts --no-interaction --ignore-platform-reqs
+
+
+# ═══════════════════════════════════════════
+# STAGE 1: Node — сборка JS/CSS assets
+# ═══════════════════════════════════════════
+FROM node:20-alpine AS node-builder
+
+WORKDIR /app
+
+# Берём vendor/ из composer-builder (включая vendor/livewire/flux)
+COPY --from=composer-builder /app/vendor ./vendor
 
 # package файлы — кэш слоя
 COPY package*.json ./
