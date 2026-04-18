@@ -7,7 +7,6 @@ use App\Filament\Support\FilamentActions;
 use App\Models\Schedule;
 use Carbon\Carbon;
 use Filament\Actions\EditAction;
-use Filament\Actions\EditAction;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
