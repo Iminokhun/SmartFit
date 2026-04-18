@@ -11,6 +11,9 @@ $COMPOSE pull
 echo "==> Stopping old containers..."
 $COMPOSE down
 
+echo "==> Removing public_data volume (assets rebuilt in new image)..."
+docker volume rm gym_erp_public_data 2>/dev/null || true
+
 echo "==> Starting containers..."
 $COMPOSE up -d
 

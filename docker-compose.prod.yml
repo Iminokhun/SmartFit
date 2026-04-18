@@ -16,6 +16,7 @@ services:
         volumes:
             - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
             - storage_data:/var/www/default/storage
+            - public_data:/var/www/default/public
         networks:
             - gym-app-network
         depends_on:
@@ -47,6 +48,7 @@ services:
         volumes:
             - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
             - ./docker/nginx/logs:/var/log/nginx
+            - public_data:/var/www/default/public:ro
             - storage_data:/var/www/default/storage:ro
             - certbot_www:/var/www/certbot:ro
             - certbot_conf:/etc/letsencrypt:ro
@@ -95,6 +97,8 @@ volumes:
     pgdata:
         driver: local
     storage_data:
+        driver: local
+    public_data:
         driver: local
     certbot_www:
         driver: local
