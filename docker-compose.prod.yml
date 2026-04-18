@@ -21,6 +21,7 @@ services:
             - gym-app-network
         depends_on:
             - gym-db
+            - gym-redis
 
     # PostgreSQL Service
     gym-db:
@@ -76,6 +77,15 @@ services:
         depends_on:
             - gym-app
             - gym-db
+            - gym-redis
+
+    # Redis Service
+    gym-redis:
+        image: redis:7-alpine
+        container_name: gym-redis
+        restart: always
+        networks:
+            - gym-app-network
 
     # Certbot — получение и обновление SSL сертификатов
     certbot:
