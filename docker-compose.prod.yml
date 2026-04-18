@@ -8,12 +8,12 @@ services:
         image: gym/php:latest
         container_name: gym-app
         restart: always
+        env_file: ./.env
         environment:
             SERVICE_NAME: app
             SERVICE_TAGS: prod
         working_dir: /var/www/default
         volumes:
-            - ./.env:/var/www/default/.env
             - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
             - storage_data:/var/www/default/storage
         networks:
@@ -63,9 +63,9 @@ services:
         image: gym/php:latest
         container_name: gym-worker
         restart: always
+        env_file: ./.env
         working_dir: /var/www/default
         volumes:
-            - ./.env:/var/www/default/.env
             - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
             - storage_data:/var/www/default/storage
         command: php artisan queue:work --queue=default --sleep=1 --tries=3 --timeout=120
