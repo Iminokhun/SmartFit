@@ -82,7 +82,8 @@ class FakeErpDataSeeder extends Seeder
             ]);
         });
 
-        $weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        $weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
         foreach ($staff as $trainer) {
             Shift::create([
                 'staff_id' => $trainer->id,
@@ -92,14 +93,28 @@ class FakeErpDataSeeder extends Seeder
             ]);
         }
 
-        $subscriptions = collect(range(1, 12))->map(function () use ($faker, $activities) {
+        $subscriptions = collect(range(1, 12))->map(function () use ($faker, $activities, $staff, $halls, $weekDays) {
             $duration = $faker->randomElement([30, 30, 60, 90]);
             $visitsLimit = $faker->randomElement([8, 12, 16, 24, null]);
             $price = $faker->randomElement([300000, 450000, 600000, 900000, 1200000]);
             $discount = $faker->randomElement([0, 0, 5, 10, 15]);
 
+            // 60% of subscriptions have access time/weekday restrictions
+            $hasAccessRules = $faker->boolean(60);
+            $allowedWeekdays = $hasAccessRules
+                ? collect($weekDays)->shuffle()->take($faker->numberBetween(3, 6))->values()->all()
+                : null;
+            $startHour = $faker->randomElement([6, 7, 8, 9]);
+            $endHour = $faker->randomElement([18, 20, 22]);
+
             return Subscription::create([
                 'activity_id' => $activities->random()->id,
+                'allowed_weekdays' => $allowedWeekdays,
+                'time_from' => $hasAccessRules ? sprintf('%02d:00:00', $startHour) : null,
+                'time_to' => $hasAccessRules ? sprintf('%02d:00:00', $endHour) : null,
+                'max_checkins_per_day' => $faker->randomElement([null, 1, 1, 2]),
+                'trainer_id' => $faker->boolean(40) ? $staff->random()->id : null,
+                'hall_id' => $faker->boolean(50) ? $halls->random()->id : null,
                 'name' => trim(($visitsLimit ? $visitsLimit . ' visits ' : 'Unlimited ') . $duration . 'd'),
                 'description' => $faker->sentence(10),
                 'duration_days' => $duration,
@@ -131,16 +146,23 @@ class FakeErpDataSeeder extends Seeder
                 ? null
                 : $faker->numberBetween(0, (int) $subscription->visits_limit);
 
+            $templateFinal = round($subscription->finalPrice(), 2);
+            // 80% use template price, 20% get individual 5-15% discount
+            $agreedPrice = $faker->boolean(80)
+                ? $templateFinal
+                : round($templateFinal * $faker->randomFloat(2, 0.85, 0.95), 2);
+
             $status = 'active';
             if ($end->isPast()) {
                 $status = 'expired';
-            } elseif ($faker->boolean(8)) {
-                $status = $faker->randomElement(['frozen', 'cancelled']);
+            } elseif ($faker->boolean(12)) {
+                $status = $faker->randomElement(['pending', 'frozen', 'cancelled']);
             }
 
             return CustomerSubscription::create([
                 'customer_id' => $customer->id,
                 'subscription_id' => $subscription->id,
+                'agreed_price' => $agreedPrice,
                 'start_date' => $start->toDateString(),
                 'end_date' => $end->toDateString(),
                 'remaining_visits' => $remainingVisits,
@@ -153,7 +175,12 @@ class FakeErpDataSeeder extends Seeder
 
         foreach ($customerSubscriptions as $customerSubscription) {
             $finalPrice = round($customerSubscription->finalPrice(), 2);
+
             if ($finalPrice <= 0) {
+                $customerSubscription->update([
+                    'payment_status' => 'paid',
+                    'debt' => 0,
+                ]);
                 continue;
             }
 
@@ -225,7 +252,13 @@ class FakeErpDataSeeder extends Seeder
                 ]);
             }
 
-            $customerSubscription->recalculatePaymentSummary();
+            if ($scenario === 'unpaid') {
+                $customerSubscription->update([
+                    'paid_amount' => 0,
+                    'debt' => $finalPrice,
+                    'payment_status' => 'unpaid',
+                ]);
+            }
         }
 
         $expenseCategories = collect([
@@ -255,13 +288,21 @@ class FakeErpDataSeeder extends Seeder
             ]);
         }
 
-        $schedules = collect(range(1, 18))->map(function () use ($faker, $activities, $staff, $halls, $weekDays) {
+        $schedules = collect(range(1, 18))->map(function () use ($faker, $activities, $subscriptions, $staff, $halls, $weekDays) {
             $hour = $faker->randomElement([7, 8, 9, 10, 16, 17, 18, 19]);
             $start = sprintf('%02d:00:00', $hour);
             $end = sprintf('%02d:00:00', $hour + 1);
+            $activity = $activities->random();
+
+            // 40% of schedules are linked to a specific subscription of the same activity
+            $activitySubscriptions = $subscriptions->where('activity_id', $activity->id);
+            $linkedSubscription = ($faker->boolean(40) && $activitySubscriptions->isNotEmpty())
+                ? $activitySubscriptions->random()
+                : null;
 
             return Schedule::create([
-                'activity_id' => $activities->random()->id,
+                'activity_id' => $activity->id,
+                'subscription_id' => $linkedSubscription?->id,
                 'trainer_id' => $staff->random()->id,
                 'hall_id' => $halls->random()->id,
                 'days_of_week' => collect($weekDays)->shuffle()->take($faker->numberBetween(2, 4))->values()->all(),
@@ -304,4 +345,3 @@ class FakeErpDataSeeder extends Seeder
         }
     }
 }
-
