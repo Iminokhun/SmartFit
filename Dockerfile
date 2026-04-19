@@ -64,7 +64,8 @@ RUN chmod +x /usr/local/bin/install-php-extensions \
         pdo_pgsql \
         pcntl \
         intl \
-        opcache
+        opcache \
+        redis
 
 # OPcache для production
 RUN { \
