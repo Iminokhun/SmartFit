@@ -29,7 +29,7 @@ class FakeErpDataSeeder extends Seeder
             return;
         }
 
-        $faker = \fake();
+        $faker = \Faker\Factory::create();
 
         $trainerRole = Role::firstOrCreate(['name' => 'trainer']);
         Role::firstOrCreate(['name' => 'manager']);
