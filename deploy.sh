@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-DOMAIN="smartfit.uz"
+DOMAIN="qoyilmaqom.uz"
 EMAIL="" 
 COMPOSE="docker compose -f docker-compose.prod.yml"
 
