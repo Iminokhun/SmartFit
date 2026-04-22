@@ -14,7 +14,7 @@ $COMPOSE up -d gym-webserver
 $COMPOSE exec gym-webserver nginx -s reload 2>/dev/null || $COMPOSE restart gym-webserver
 
 echo "==> Step 2: Getting SSL certificate from Let's Encrypt..."
-$COMPOSE run --rm certbot certonly \
+$COMPOSE run --rm --entrypoint certbot certbot certonly \
     --webroot \
     --webroot-path /var/www/certbot \
     --register-unsafely-without-email \
