@@ -50,3 +50,13 @@ function formatMoney(value) {
     const num = Number(value || 0);
     return num.toLocaleString('en-US');
 }
+
+window.hapticSelection = hapticSelection;
+window.hapticSuccess   = hapticSuccess;
+window.hapticError     = hapticError;
+window.hapticLight     = hapticLight;
+window.hapticMedium    = hapticMedium;
+window.tgAlert         = tgAlert;
+window.tgConfirm       = tgConfirm;
+window.escapeHtml      = escapeHtml;
+window.formatMoney     = formatMoney;
