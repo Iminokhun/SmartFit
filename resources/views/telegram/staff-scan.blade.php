@@ -124,7 +124,16 @@
         clearMsg();
         const initData = getInitData();
         if (!initData) {
-            showMsg('Open from Telegram Staff bot only.', false);
+            const diag = {
+                hasWindowTelegram: !!window.Telegram,
+                hasWebApp: !!window.Telegram?.WebApp,
+                hasWindowTg: !!window.tg,
+                initDataLength: (window.tg?.initData || '').length,
+                platform: window.tg?.platform || 'unknown',
+                version: window.tg?.version || 'unknown',
+            };
+            console.log('DEBUG tg state:', diag);
+            showMsg('Open from Telegram Staff bot only. DEBUG: ' + JSON.stringify(diag), false);
             return;
         }
 
