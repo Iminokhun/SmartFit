@@ -40,7 +40,7 @@
     <div id="msg" class="msg"></div>
 </div>
 
-<script>
+<script type="module">
     const tg = window.tg;
 
     const linkCard = document.getElementById('link-card');

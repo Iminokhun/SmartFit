@@ -124,7 +124,7 @@
     </div>
 </div>
 
-<script>
+<script type="module">
     const tg = window.tg;
 
     const form = document.getElementById('link-form');

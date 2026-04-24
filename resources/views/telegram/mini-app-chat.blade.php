@@ -69,7 +69,7 @@
 
 </div>
 
-<script>
+<script type="module">
     const tg = window.tg;
 
     const messagesEl     = document.getElementById('chat-messages');

@@ -57,7 +57,7 @@
     </div>
 </div>
 
-<script>
+<script type="module">
     const tg = window.tg;
 
     const skeletonBlock = document.getElementById('skeleton-block');

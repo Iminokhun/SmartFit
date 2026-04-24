@@ -48,7 +48,7 @@
     </div>
 </div>
 
-<script>
+<script type="module">
     const tg = window.tg;
 
     if (tg?.BackButton) tg.BackButton.hide();
