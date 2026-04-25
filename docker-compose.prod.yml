@@ -2,10 +2,7 @@ services:
 
     # PHP Service
     gym-app:
-        build:
-            context: ./
-            target: production
-        image: gym/php:latest
+        image: ${DOCKERHUB_USERNAME}/gym-erp:latest
         container_name: gym-app
         restart: always
         env_file: ./.env
@@ -60,10 +57,7 @@ services:
 
     # Queue Worker
     gym-worker:
-        build:
-            context: ./
-            target: production
-        image: gym/php:latest
+        image: ${DOCKERHUB_USERNAME}/gym-erp:latest
         container_name: gym-worker
         restart: always
         env_file: ./.env
