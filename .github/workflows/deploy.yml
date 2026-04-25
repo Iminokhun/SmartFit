@@ -22,9 +22,6 @@ jobs:
           php-version: '8.4'
           coverage: none
 
-      - name: Add Flux credentials
-        run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
-
       - name: Prepare environment
         run: |
           mkdir -p bootstrap/cache
@@ -57,9 +54,6 @@ jobs:
           php-version: '8.4'
           extensions: pdo_sqlite, pcntl, intl, gd, zip, soap
           coverage: none
-
-      - name: Add Flux credentials
-        run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
       - name: Prepare environment
         run: |
@@ -112,9 +106,6 @@ jobs:
           target: production
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          build-args: |
-            FLUX_USERNAME=${{ secrets.FLUX_USERNAME }}
-            FLUX_LICENSE_KEY=${{ secrets.FLUX_LICENSE_KEY }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

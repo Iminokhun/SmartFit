@@ -10,14 +10,8 @@ RUN apk add --no-cache git unzip
 
 WORKDIR /app
 
-ARG FLUX_USERNAME=""
-ARG FLUX_LICENSE_KEY=""
-
 COPY composer.json composer.lock ./
-RUN if [ -n "$FLUX_USERNAME" ]; then \
-      composer config http-basic.composer.fluxui.dev "$FLUX_USERNAME" "$FLUX_LICENSE_KEY"; \
-    fi && \
-    composer install \
+RUN composer install \
     --no-dev \
     --no-scripts \
     --no-interaction \
