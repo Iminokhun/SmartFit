@@ -88,6 +88,8 @@ services:
         volumes:
             - certbot_www:/var/www/certbot
             - certbot_conf:/etc/letsencrypt
+        networks:
+            - gym-app-network
         entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 

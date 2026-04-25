@@ -25,6 +25,10 @@ jobs:
       - name: Prepare environment
         run: |
           mkdir -p bootstrap/cache
+          mkdir -p storage/framework/views
+          mkdir -p storage/framework/cache
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/logs
           cp .env.example .env
 
       - name: Install Composer dependencies
@@ -58,6 +62,10 @@ jobs:
       - name: Prepare environment
         run: |
           mkdir -p bootstrap/cache
+          mkdir -p storage/framework/views
+          mkdir -p storage/framework/cache
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/logs
           cp .env.example .env
 
       - name: Install Composer dependencies
@@ -139,8 +147,10 @@ jobs:
             echo "==> Restarting app containers..."
             DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }} docker compose -f docker-compose.prod.yml up -d --force-recreate gym-app gym-worker
 
-            echo "==> Waiting for app to be ready..."
-            sleep 5
+            echo "==> Waiting for DB to be ready..."
+            until docker compose -f docker-compose.prod.yml exec -T gym-db pg_isready -U "${DB_USERNAME:-gym_user}"; do
+              echo "DB not ready, retrying..."; sleep 3
+            done
 
             echo "==> Running migrations..."
             docker compose -f docker-compose.prod.yml exec -T gym-app php artisan migrate --force

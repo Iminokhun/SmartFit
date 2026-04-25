@@ -29,12 +29,16 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
           cache: 'npm'
 
       - name: Prepare environment
         run: |
           mkdir -p bootstrap/cache
+          mkdir -p storage/framework/views
+          mkdir -p storage/framework/cache
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/logs
           cp .env.example .env
 
       - name: Install Dependencies
