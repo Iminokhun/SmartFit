@@ -25,8 +25,16 @@ jobs:
       - name: Add Flux credentials
         run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
+      - name: Prepare environment
+        run: |
+          mkdir -p bootstrap/cache
+          cp .env.example .env
+
       - name: Install Composer dependencies
-        run: mkdir -p bootstrap/cache && composer install --optimize-autoloader --no-interaction
+        run: composer install --optimize-autoloader --no-interaction
+
+      - name: Generate app key
+        run: php artisan key:generate
 
       - name: Run Pint
         run: vendor/bin/pint --test
@@ -53,11 +61,13 @@ jobs:
       - name: Add Flux credentials
         run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
-      - name: Install Composer dependencies
-        run: mkdir -p bootstrap/cache && composer install --optimize-autoloader --no-interaction
+      - name: Prepare environment
+        run: |
+          mkdir -p bootstrap/cache
+          cp .env.example .env
 
-      - name: Copy .env
-        run: cp .env.example .env
+      - name: Install Composer dependencies
+        run: composer install --optimize-autoloader --no-interaction
 
       - name: Generate app key
         run: php artisan key:generate
