@@ -6,11 +6,38 @@ on:
 
 jobs:
   # ═══════════════════════════════════
-  # JOB 1: Tests
+  # JOB 1: Lint
+  # ═══════════════════════════════════
+  lint:
+    name: Code Style
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Add Flux credentials
+        run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
+
+      - name: Install Composer dependencies
+        run: mkdir -p bootstrap/cache && composer install --optimize-autoloader --no-interaction
+
+      - name: Run Pint
+        run: vendor/bin/pint --test
+
+  # ═══════════════════════════════════
+  # JOB 2: Tests
   # ═══════════════════════════════════
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    needs: lint
 
     steps:
       - name: Checkout code
@@ -27,7 +54,7 @@ jobs:
         run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
       - name: Install Composer dependencies
-        run: composer install --optimize-autoloader --no-interaction
+        run: mkdir -p bootstrap/cache && composer install --optimize-autoloader --no-interaction
 
       - name: Copy .env
         run: cp .env.example .env
@@ -39,7 +66,7 @@ jobs:
         run: php artisan test
 
   # ═══════════════════════════════════
-  # JOB 2: Build & Push Docker Image
+  # JOB 3: Build & Push Docker Image
   # ═══════════════════════════════════
   build:
     name: Build & Push Image
@@ -82,7 +109,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ═══════════════════════════════════
-  # JOB 3: Deploy to GCP server
+  # JOB 4: Deploy to GCP server
   # ═══════════════════════════════════
   deploy:
     name: Deploy to Server
