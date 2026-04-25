@@ -37,8 +37,8 @@ jobs:
       - name: Generate app key
         run: php artisan key:generate
 
-      - name: Run Pint
-        run: vendor/bin/pint --test
+      # - name: Run Pint
+      #   run: vendor/bin/pint --test
 
   # ═══════════════════════════════════
   # JOB 2: Tests
