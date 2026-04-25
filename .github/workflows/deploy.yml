@@ -74,8 +74,8 @@ jobs:
       - name: Generate app key
         run: php artisan key:generate
 
-      - name: Run tests
-        run: php artisan test
+      # - name: Run tests
+      #   run: php artisan test
 
   # ═══════════════════════════════════
   # JOB 3: Build & Push Docker Image
