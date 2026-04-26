@@ -32,7 +32,7 @@
         <div class="header">
             <div>
                 <h2 class="header-title" id="welcome-title">Hello</h2>
-                <p class="header-sub">SmartFit profile</p>
+                <p class="header-sub"></p>
             </div>
             <div class="avatar-dot" id="avatar-dot">A</div>
         </div>
@@ -75,26 +75,16 @@
             </div>
         </div>
 
-        <div class="quick-actions">
-            <a href="{{ route('telegram.mini-app.my-subscriptions') }}" class="qa-btn" id="btn-my-subscriptions">My Pass</a>
-            <a href="{{ route('telegram.mini-app.subscriptions') }}" class="qa-btn">Subscriptions</a>
-            <button type="button" id="btn-show-qr" class="qa-btn">My QR</button>
-        </div>
+        <button type="button" id="btn-show-qr" class="hidden" aria-hidden="true"></button>
 
-        <div id="subscriptions-card" class="card hidden mt-3">
-            <div class="kpi-label">Active Subscriptions</div>
-            <div id="subscriptions-empty" class="kpi-value">No active subscriptions</div>
-            <ul id="subscriptions-list" class="subs-list hidden"></ul>
-        </div>
-
-        <div id="qr-card" class="card hidden mt-3">
-            <div class="kpi-label">Check-in QR</div>
+        <div id="qr-modal" class="qr-modal hidden">
+            <button type="button" id="qr-modal-close" class="qr-modal-close" aria-label="Close">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+            <div class="qr-modal-title">Check-in QR</div>
             <div id="qr-svg" class="qr-svg-wrap"></div>
-            <div class="qr-progress-wrap mt-2">
-                <div id="qr-progress-fill" class="qr-progress-fill"></div>
-            </div>
             <div id="qr-expire-text" class="qr-expire-text">Expires in: -</div>
-            <div id="qr-status" class="qr-status mt-2"></div>
+            <div id="qr-status" class="qr-status"></div>
         </div>
 
         <div class="card mt-3">
@@ -148,15 +138,10 @@
     const scheduleList = document.getElementById('schedule-list');
     const scheduleLabel = document.getElementById('schedule-label');
     const btnShowQr = document.getElementById('btn-show-qr');
-    const subscriptionsCard = document.getElementById('subscriptions-card');
-    const subscriptionsEmpty = document.getElementById('subscriptions-empty');
-    const subscriptionsList = document.getElementById('subscriptions-list');
-    const qrCard = document.getElementById('qr-card');
+    const qrModal = document.getElementById('qr-modal');
     const qrSvg = document.getElementById('qr-svg');
-    const qrProgressFill = document.getElementById('qr-progress-fill');
     const qrExpireText = document.getElementById('qr-expire-text');
     const qrStatus = document.getElementById('qr-status');
-    let currentActiveSubscriptions = [];
     let currentVisitsLeft = null;
     let qrTimer = null;
     let qrPollTimer = null;
@@ -294,36 +279,10 @@
             scheduleEmpty.classList.remove('hidden');
         }
 
-        currentActiveSubscriptions = data?.active_subscriptions || [];
-        renderActiveSubscriptions(currentActiveSubscriptions);
-
         skeletonBlock.classList.add('hidden');
         registerBlock.classList.add('hidden');
         dashboardBlock.classList.remove('hidden');
         hideMainButton();
-    }
-
-    function renderActiveSubscriptions(items) {
-        if (!items.length) {
-            subscriptionsList.innerHTML = '';
-            subscriptionsList.classList.add('hidden');
-            subscriptionsEmpty.classList.remove('hidden');
-            return;
-        }
-
-        subscriptionsList.innerHTML = items.map((item) => {
-            const debt = item.debt ?? 0;
-            return `
-            <li class="subs-item">
-                <div class="subs-item-name">${escapeHtml(item.name || 'Subscription')}</div>
-                <div class="subs-item-meta">Valid until: ${escapeHtml(item.end_date || '-')}</div>
-                <div class="subs-item-meta">Visits left: ${escapeHtml(item.remaining_visits || '-')} | Payment: ${escapeHtml(item.payment_status || '-')}</div>
-                ${debt > 0 ? `<div class="subs-item-debt">Debt: ${Number(debt).toLocaleString()} UZS</div>` : ''}
-            </li>`;
-        }).join('');
-
-        subscriptionsList.classList.remove('hidden');
-        subscriptionsEmpty.classList.add('hidden');
     }
 
     function formatSeconds(total) {
@@ -358,8 +317,6 @@
                     if (qrTimer) { clearInterval(qrTimer); qrTimer = null; }
                     qrStatus.className = 'qr-status success';
                     qrStatus.textContent = 'Check-in registered!';
-                    qrProgressFill.style.width = '100%';
-                    qrProgressFill.className = 'qr-progress-fill';
                     hapticSuccess();
                     currentVisitsLeft = newLeft;
                     // Update dashboard visits
@@ -384,10 +341,8 @@
                 qrTimer = null;
                 stopQrPoll();
                 qrExpireText.textContent = 'Expired — refreshing...';
-                qrProgressFill.style.width = '0%';
-                qrProgressFill.className = 'qr-progress-fill danger';
                 setTimeout(() => {
-                    if (!qrCard.classList.contains('hidden')) {
+                    if (!qrModal.classList.contains('hidden')) {
                         loadCheckinQr();
                     }
                 }, 1200);
@@ -396,15 +351,6 @@
 
             qrExpireText.textContent = `Expires in: ${formatSeconds(left)}`;
 
-            const pct = (left / QR_TTL_SECONDS) * 100;
-            qrProgressFill.style.width = pct + '%';
-            if (pct > 40) {
-                qrProgressFill.className = 'qr-progress-fill';
-            } else if (pct > 15) {
-                qrProgressFill.className = 'qr-progress-fill warn';
-            } else {
-                qrProgressFill.className = 'qr-progress-fill danger';
-            }
         };
 
         tick();
@@ -420,10 +366,11 @@
         }
 
         qrExpireText.textContent = 'Generating...';
-        qrProgressFill.style.width = '100%';
-        qrProgressFill.className = 'qr-progress-fill';
         qrStatus.className = 'qr-status';
         qrStatus.textContent = '';
+        qrModal.classList.remove('hidden');
+        btnShowQr.classList.add('is-active');
+        document.getElementById('nav-qr-btn')?.classList.add('active');
 
         try {
             const res = await fetch('/telegram/mini-app/checkin-qr', {
@@ -435,13 +382,14 @@
             const data = await res.json();
             if (!res.ok || !data.ok) {
                 hapticError();
+                qrModal.classList.add('hidden');
+                btnShowQr.classList.remove('is-active');
+                document.getElementById('nav-qr-btn')?.classList.remove('active');
                 tgAlert(data.message || 'Failed to generate QR.');
                 return;
             }
 
             qrSvg.innerHTML = data.qr_svg || '';
-            qrCard.classList.remove('hidden');
-            btnShowQr.classList.add('is-active');
             startQrCountdown(data.expires_at);
             qrStatus.className = 'qr-status scanning';
             qrStatus.textContent = 'Waiting for scan...';
@@ -552,20 +500,42 @@
         handleFormSubmit();
     });
 
+    function closeQrModal() {
+        qrModal.classList.add('hidden');
+        btnShowQr.classList.remove('is-active');
+        document.getElementById('nav-qr-btn')?.classList.remove('active');
+        if (qrTimer) { clearInterval(qrTimer); qrTimer = null; }
+        stopQrPoll();
+        history.replaceState(null, '', location.pathname);
+    }
+
     btnShowQr.addEventListener('click', () => {
         hapticSelection();
-        const isHidden = qrCard.classList.contains('hidden');
-        if (!isHidden) {
-            qrCard.classList.add('hidden');
-            btnShowQr.classList.remove('is-active');
-            if (qrTimer) { clearInterval(qrTimer); qrTimer = null; }
-            stopQrPoll();
+        if (!qrModal.classList.contains('hidden')) {
+            closeQrModal();
             return;
         }
         loadCheckinQr();
     });
 
-    loadState().catch(() => {
+    document.getElementById('qr-modal-close')?.addEventListener('click', () => {
+        hapticSelection();
+        closeQrModal();
+    });
+
+    // Intercept nav QR button — show QR without page reload
+    document.getElementById('nav-qr-btn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        hapticSelection();
+        history.replaceState(null, '', '#qr');
+        btnShowQr.click();
+    });
+
+    loadState().then(() => {
+        if (location.hash === '#qr') {
+            btnShowQr.click();
+        }
+    }).catch(() => {
         hapticError();
         tgAlert('Failed to initialize Mini App.');
     });

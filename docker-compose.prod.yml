@@ -55,6 +55,24 @@ services:
         depends_on:
             - gym-app
 
+    # Scheduler — runs php artisan schedule:run every minute
+    gym-scheduler:
+        image: ${DOCKERHUB_USERNAME}/gym-erp:latest
+        container_name: gym-scheduler
+        restart: always
+        env_file: ./.env
+        working_dir: /var/www/default
+        volumes:
+            - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+            - storage_data:/var/www/default/storage
+        command: >
+            sh -c "while true; do php artisan schedule:run --no-ansi; sleep 60; done"
+        networks:
+            - gym-app-network
+        depends_on:
+            - gym-app
+            - gym-db
+
     # Queue Worker
     gym-worker:
         image: ${DOCKERHUB_USERNAME}/gym-erp:latest

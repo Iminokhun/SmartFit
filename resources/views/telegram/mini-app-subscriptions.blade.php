@@ -198,7 +198,7 @@
         }
 
         const popular = [...plans]
-            .sort((a, b) => Number(b.final_price || 0) - Number(a.final_price || 0))
+            .sort((a, b) => Number(b.popular_count || 0) - Number(a.popular_count || 0))
             .slice(0, 8);
 
         const newest = [...plans]

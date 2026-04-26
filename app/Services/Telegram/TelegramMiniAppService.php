@@ -50,15 +50,6 @@ class TelegramMiniAppService
             ])
             ->orderBy('price')
             ->get()
-            ->filter(function (Subscription $subscription) {
-                $limit = $subscription->visits_limit;
-
-                if ($limit === null) {
-                    return true;
-                }
-
-                return (int) $subscription->active_customers_count < (int) $limit;
-            })
             ->map(function (Subscription $subscription) {
                 return [
                     'id' => (int) $subscription->id,
@@ -69,6 +60,7 @@ class TelegramMiniAppService
                     'price' => (float) ($subscription->price ?? 0),
                     'discount' => (float) ($subscription->discount ?? 0),
                     'final_price' => $subscription->finalPrice(),
+                    'popular_count' => (int) $subscription->active_customers_count,
                 ];
             })
             ->values()
@@ -312,7 +304,8 @@ class TelegramMiniAppService
         $rows = CustomerSubscription::query()
             ->with('subscription:id,name')
             ->where('customer_id', $customerId)
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'expired'])
+            ->orderByRaw("CASE status WHEN 'active' THEN 1 ELSE 2 END")
             ->orderBy('end_date')
             ->get();
 
@@ -322,6 +315,7 @@ class TelegramMiniAppService
 
         return $rows->map(function (CustomerSubscription $row) {
             $remaining = $row->remaining_visits === null ? 'Unlimited' : (string) $row->remaining_visits;
+            $isExpired = $row->status === 'expired' || ($row->end_date && \Carbon\Carbon::parse($row->end_date)->isPast());
 
             return [
                 'name' => $row->subscription?->name ?? 'Subscription',
@@ -329,6 +323,7 @@ class TelegramMiniAppService
                 'remaining_visits' => $remaining,
                 'payment_status' => (string) ($row->payment_status ?? 'unknown'),
                 'debt' => (float) ($row->debt ?? 0),
+                'is_expired' => $isExpired,
             ];
         })->values()->all();
     }
