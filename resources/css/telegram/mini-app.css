@@ -543,9 +543,17 @@ button {
 }
 
 /* ── QR Modal ─────────────────────────────────────────────── */
-.qr-modal {
+dialog.qr-modal {
     position: fixed;
     inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0;
+    padding: 24px 20px;
+    border: none;
+    outline: none;
     z-index: 200;
     background: var(--tg-bg);
     display: flex;
@@ -553,8 +561,12 @@ button {
     align-items: center;
     justify-content: center;
     gap: 20px;
-    padding: 24px 20px;
+    box-sizing: border-box;
     animation: qr-fade-in 0.18s ease;
+}
+
+dialog.qr-modal::backdrop {
+    background: var(--tg-bg);
 }
 
 @keyframes qr-fade-in {

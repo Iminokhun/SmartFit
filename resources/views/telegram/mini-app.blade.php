@@ -332,7 +332,7 @@
                 stopQrPoll();
                 qrExpireText.textContent = 'Expired — refreshing...';
                 setTimeout(() => {
-                    if (!qrModal.classList.contains('hidden')) {
+                    if (qrModal.open) {
                         loadCheckinQr();
                     }
                 }, 1200);
@@ -358,7 +358,7 @@
         qrExpireText.textContent = 'Generating...';
         qrStatus.className = 'qr-status';
         qrStatus.textContent = '';
-        qrModal.classList.remove('hidden');
+        qrModal.showModal();
         btnShowQr.classList.add('is-active');
         document.getElementById('nav-qr-btn')?.classList.add('active');
 
@@ -372,7 +372,7 @@
             const data = await res.json();
             if (!res.ok || !data.ok) {
                 hapticError();
-                qrModal.classList.add('hidden');
+                qrModal.close();
                 btnShowQr.classList.remove('is-active');
                 document.getElementById('nav-qr-btn')?.classList.remove('active');
                 tgAlert(data.message || 'Failed to generate QR.');
@@ -491,7 +491,7 @@
     });
 
     function closeQrModal() {
-        qrModal.classList.add('hidden');
+        qrModal.close();
         btnShowQr.classList.remove('is-active');
         document.getElementById('nav-qr-btn')?.classList.remove('active');
         if (qrTimer) { clearInterval(qrTimer); qrTimer = null; }
@@ -501,7 +501,7 @@
 
     btnShowQr.addEventListener('click', () => {
         hapticSelection();
-        if (!qrModal.classList.contains('hidden')) {
+        if (qrModal.open) {
             closeQrModal();
             return;
         }
@@ -511,6 +511,14 @@
     document.getElementById('qr-modal-close')?.addEventListener('click', () => {
         hapticSelection();
         closeQrModal();
+    });
+
+    qrModal.addEventListener('close', () => {
+        btnShowQr.classList.remove('is-active');
+        document.getElementById('nav-qr-btn')?.classList.remove('active');
+        if (qrTimer) { clearInterval(qrTimer); qrTimer = null; }
+        stopQrPoll();
+        history.replaceState(null, '', location.pathname);
     });
 
     // Intercept nav QR button — show QR without page reload
@@ -532,7 +540,7 @@
 </script>
 <x-telegram.bottom-nav active="home" />
 
-<div id="qr-modal" class="qr-modal hidden">
+<dialog id="qr-modal" class="qr-modal">
     <button type="button" id="qr-modal-close" class="qr-modal-close" aria-label="Close">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
     </button>
@@ -540,6 +548,6 @@
     <div id="qr-svg" class="qr-svg-wrap"></div>
     <div id="qr-expire-text" class="qr-expire-text">Expires in: -</div>
     <div id="qr-status" class="qr-status"></div>
-</div>
+</dialog>
 </body>
 </html>

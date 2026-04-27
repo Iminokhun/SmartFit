@@ -253,8 +253,8 @@ class TelegramStaffMiniAppController extends Controller
         $sub = $result['subscription'] ?? [];
         $visits = $sub['remaining_visits_label'] ?? '—';
         $text = "✅ Check-in registered\n\n"
-            . "👤 Customer" . ($result['customer_name'] ?? '—') . "\n"
-            . "📋 Subscription" . ($sub['subscription_name'] ?? '—') . "\n"
+            . "👤 Customer: " . ($result['customer_name'] ?? '—') . "\n"
+            . "📋 Subscription: " . ($sub['subscription_name'] ?? '—') . "\n"
             . "🔢 Remaining: {$visits}";
 
         app(TelegramBotService::class)->sendStaffMessage($link, $text);
