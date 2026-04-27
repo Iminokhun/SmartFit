@@ -13,6 +13,34 @@ class TelegramBotService
         SendTelegramMessageJob::dispatch($chatId, $text, $options);
     }
 
+    public function sendStaffMessage(int|string $chatId, string $text, array $options = []): void
+    {
+        $token = (string) config('services.telegram_staff.bot_token');
+        if ($token === '') {
+            Log::channel('telegram')->warning('telegram.staff.send_message.missing_token', ['chat_id' => $chatId]);
+            return;
+        }
+
+        $payload = array_merge(['chat_id' => $chatId, 'text' => $text], $options);
+
+        try {
+            $response = Http::timeout(8)
+                ->asForm()
+                ->post("https://api.telegram.org/bot{$token}/sendMessage", $payload)
+                ->json();
+
+            Log::channel('telegram')->info('telegram.staff.send_message', [
+                'chat_id' => $chatId,
+                'ok' => (bool) ($response['ok'] ?? false),
+            ]);
+        } catch (\Throwable $e) {
+            Log::channel('telegram')->error('telegram.staff.send_message.exception', [
+                'chat_id' => $chatId,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
     public function sendInvoice(int|string $chatId, array $invoiceData): array
     {
         $token = (string) config('services.telegram.bot_token');

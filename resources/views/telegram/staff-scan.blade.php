@@ -66,7 +66,21 @@
 
     function clearMsg() {
         msg.className = 'msg';
-        msg.textContent = '';
+        msg.innerHTML = '';
+    }
+
+    function esc(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function showCheckinResult(data) {
+        const sub = data.subscription || {};
+        const visits = sub.remaining_visits_label || '—';
+        msg.className = 'msg ok checkin-result';
+        msg.innerHTML =
+            '<div class="checkin-result-name">' + esc(data.customer_name || '—') + '</div>' +
+            '<div class="checkin-result-sub">' + esc(sub.subscription_name || '—') + '</div>' +
+            '<div class="checkin-result-visits">Remaining: ' + esc(String(visits)) + '</div>';
     }
 
     function getInitData() {
@@ -191,7 +205,7 @@
 
             selectionCard.classList.add('hidden');
             optionList.innerHTML = '';
-            showMsg(data.message || 'Check-in registered.', true);
+            showCheckinResult(data);
         } catch (e) {
             showMsg(e.message || 'Consume failed.', false);
         }
@@ -233,7 +247,7 @@
 
             selectionCard.classList.add('hidden');
             optionList.innerHTML = '';
-            showMsg(data.message || 'Check-in registered.', true);
+            showCheckinResult(data);
         } catch (e) {
             showMsg(e.message || 'Resolve failed.', false);
         }

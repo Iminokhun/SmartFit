@@ -107,6 +107,11 @@ button {
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
+.checkin-result { display: flex; flex-direction: column; gap: 3px; }
+.checkin-result-name   { font-size: 16px; font-weight: 700; color: var(--tg-text); }
+.checkin-result-sub    { font-size: 13px; color: var(--tg-hint); }
+.checkin-result-visits { font-size: 13px; font-weight: 600; color: var(--color-success-fg); }
+
 .hidden {
     display: none !important;
 }

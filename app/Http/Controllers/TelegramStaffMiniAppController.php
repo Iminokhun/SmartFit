@@ -6,6 +6,7 @@ use App\Models\TelegramStaffLink;
 use App\Models\User;
 use App\Services\Checkin\QrCheckinService;
 use App\Services\Telegram\TelegramAuthService;
+use App\Services\Telegram\TelegramBotService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -165,6 +166,10 @@ class TelegramStaffMiniAppController extends Controller
 
         \Log::info('staff.scan.resolve.payload', $request->all());
 
+        if (($result['ok'] ?? false) && ! ($result['requires_selection'] ?? false)) {
+            $this->notifyStaff($user, $result);
+        }
+
         return $this->jsonResponse($result);
     }
 
@@ -192,6 +197,10 @@ class TelegramStaffMiniAppController extends Controller
             $data['schedule_id'] ?? null
         );
         \Log::info('staff.scan.consume.payload', $request->all());
+
+        if ($result['ok'] ?? false) {
+            $this->notifyStaff($user, $result);
+        }
 
         return $this->jsonResponse($result);
     }
@@ -232,6 +241,23 @@ class TelegramStaffMiniAppController extends Controller
         }
 
         return in_array((int) $user->role_id, [1, 6], true);
+    }
+
+    private function notifyStaff(User $user, array $result): void
+    {
+        $link = TelegramStaffLink::where('user_id', $user->id)->value('telegram_user_id');
+        if (! $link) {
+            return;
+        }
+
+        $sub = $result['subscription'] ?? [];
+        $visits = $sub['remaining_visits_label'] ?? '—';
+        $text = "✅ Check-in registered\n\n"
+            . "👤 Customer" . ($result['customer_name'] ?? '—') . "\n"
+            . "📋 Subscription" . ($sub['subscription_name'] ?? '—') . "\n"
+            . "🔢 Remaining: {$visits}";
+
+        app(TelegramBotService::class)->sendStaffMessage($link, $text);
     }
 
     private function jsonResponse(array $result): JsonResponse

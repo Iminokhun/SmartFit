@@ -77,16 +77,6 @@
 
         <button type="button" id="btn-show-qr" class="hidden" aria-hidden="true"></button>
 
-        <div id="qr-modal" class="qr-modal hidden">
-            <button type="button" id="qr-modal-close" class="qr-modal-close" aria-label="Close">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
-            <div class="qr-modal-title">Check-in QR</div>
-            <div id="qr-svg" class="qr-svg-wrap"></div>
-            <div id="qr-expire-text" class="qr-expire-text">Expires in: -</div>
-            <div id="qr-status" class="qr-status"></div>
-        </div>
-
         <div class="card mt-3">
             <div class="kpi-label" id="schedule-label">My Schedule</div>
             <div id="schedule-empty" class="schedule-empty-text">No classes today</div>
@@ -541,5 +531,15 @@
     });
 </script>
 <x-telegram.bottom-nav active="home" />
+
+<div id="qr-modal" class="qr-modal hidden">
+    <button type="button" id="qr-modal-close" class="qr-modal-close" aria-label="Close">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="qr-modal-title">Check-in QR</div>
+    <div id="qr-svg" class="qr-svg-wrap"></div>
+    <div id="qr-expire-text" class="qr-expire-text">Expires in: -</div>
+    <div id="qr-status" class="qr-status"></div>
+</div>
 </body>
 </html>

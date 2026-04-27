@@ -135,7 +135,10 @@ class QrCheckinService
             }
 
             $subscription = CustomerSubscription::query()
-                ->with('subscription:id,name,activity_id,allowed_weekdays,time_from,time_to,max_checkins_per_day')
+                ->with([
+                    'subscription:id,name,activity_id,allowed_weekdays,time_from,time_to,max_checkins_per_day',
+                    'customer:id,full_name',
+                ])
                 ->lockForUpdate()
                 ->where('id', $customerSubscriptionId)
                 ->where('customer_id', (int) $tokenRow->customer_id)
@@ -295,6 +298,7 @@ class QrCheckinService
                 'message' => 'Check-in registered successfully.',
                 'checkin_id' => (int) $checkin->id,
                 'customer_id' => (int) $subscription->customer_id,
+                'customer_name' => $subscription->customer->full_name ?? 'Unknown',
                 'subscription' => $this->subscriptionOption($subscription),
             ];
         });
