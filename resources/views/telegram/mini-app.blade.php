@@ -75,8 +75,6 @@
             </div>
         </div>
 
-        <button type="button" id="btn-show-qr" class="hidden" aria-hidden="true"></button>
-
         <div class="card mt-3">
             <div class="kpi-label" id="schedule-label">My Schedule</div>
             <div id="schedule-empty" class="schedule-empty-text">No classes today</div>
@@ -127,15 +125,7 @@
     const scheduleEmpty = document.getElementById('schedule-empty');
     const scheduleList = document.getElementById('schedule-list');
     const scheduleLabel = document.getElementById('schedule-label');
-    const btnShowQr = document.getElementById('btn-show-qr');
-    const qrModal = document.getElementById('qr-modal');
-    const qrSvg = document.getElementById('qr-svg');
-    const qrExpireText = document.getElementById('qr-expire-text');
-    const qrStatus = document.getElementById('qr-status');
     let currentVisitsLeft = null;
-    let qrTimer = null;
-    let qrPollTimer = null;
-    const QR_TTL_SECONDS = 300;
 
     // MainButton setup
     function showMainButton() {
@@ -275,122 +265,6 @@
         hideMainButton();
     }
 
-    function formatSeconds(total) {
-        const safe = Math.max(0, total);
-        const min = Math.floor(safe / 60);
-        const sec = safe % 60;
-        return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-    }
-
-    function stopQrPoll() {
-        if (qrPollTimer) { clearInterval(qrPollTimer); qrPollTimer = null; }
-    }
-
-    function startQrPoll() {
-        stopQrPoll();
-        const initData = tg?.initData || '';
-        if (!initData || currentVisitsLeft === null) return;
-
-        qrPollTimer = setInterval(async () => {
-            try {
-                const res = await fetch('/telegram/mini-app/me', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ init_data: initData }),
-                });
-                const data = await res.json();
-                if (!res.ok || !data.linked) return;
-
-                const newLeft = data?.visits?.is_unlimited ? Infinity : (data?.visits?.left ?? null);
-                if (newLeft !== null && newLeft < currentVisitsLeft) {
-                    stopQrPoll();
-                    if (qrTimer) { clearInterval(qrTimer); qrTimer = null; }
-                    qrStatus.className = 'qr-status success';
-                    qrStatus.textContent = 'Check-in registered!';
-                    hapticSuccess();
-                    currentVisitsLeft = newLeft;
-                    // Update dashboard visits
-                    visitsValue.textContent = newLeft === Infinity ? 'Unlimited' : String(newLeft);
-                    visitsUsage.textContent = newLeft === Infinity ? 'Unlimited' : `${newLeft} left`;
-                }
-            } catch (_) {}
-        }, 4000);
-    }
-
-    function startQrCountdown(expiresAtIso) {
-        if (qrTimer) { clearInterval(qrTimer); qrTimer = null; }
-
-        const expiresAt = new Date(expiresAtIso);
-        if (Number.isNaN(expiresAt.getTime())) return;
-
-        const tick = () => {
-            const left = Math.floor((expiresAt.getTime() - Date.now()) / 1000);
-
-            if (left <= 0) {
-                clearInterval(qrTimer);
-                qrTimer = null;
-                stopQrPoll();
-                qrExpireText.textContent = 'Expired — refreshing...';
-                setTimeout(() => {
-                    if (qrModal.open) {
-                        loadCheckinQr();
-                    }
-                }, 1200);
-                return;
-            }
-
-            qrExpireText.textContent = `Expires in: ${formatSeconds(left)}`;
-
-        };
-
-        tick();
-        qrTimer = setInterval(tick, 1000);
-    }
-
-    async function loadCheckinQr() {
-        const initData = tg?.initData || '';
-        if (!initData) {
-            tgAlert('Open this page only from Telegram bot.');
-            hapticError();
-            return;
-        }
-
-        qrExpireText.textContent = 'Generating...';
-        qrStatus.className = 'qr-status';
-        qrStatus.textContent = '';
-        qrModal.showModal();
-        btnShowQr.classList.add('is-active');
-        document.getElementById('nav-qr-btn')?.classList.add('active');
-
-        try {
-            const res = await fetch('/telegram/mini-app/checkin-qr', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ init_data: initData }),
-            });
-
-            const data = await res.json();
-            if (!res.ok || !data.ok) {
-                hapticError();
-                qrModal.close();
-                btnShowQr.classList.remove('is-active');
-                document.getElementById('nav-qr-btn')?.classList.remove('active');
-                tgAlert(data.message || 'Failed to generate QR.');
-                return;
-            }
-
-            qrSvg.innerHTML = data.qr_svg || '';
-            startQrCountdown(data.expires_at);
-            qrStatus.className = 'qr-status scanning';
-            qrStatus.textContent = 'Waiting for scan...';
-            startQrPoll();
-            hapticLight();
-        } catch (_) {
-            hapticError();
-            tgAlert('Network error. Try again.');
-        }
-    }
-
     async function handleFormSubmit() {
         clearMessage();
 
@@ -490,49 +364,7 @@
         handleFormSubmit();
     });
 
-    function closeQrModal() {
-        qrModal.close();
-        btnShowQr.classList.remove('is-active');
-        document.getElementById('nav-qr-btn')?.classList.remove('active');
-        if (qrTimer) { clearInterval(qrTimer); qrTimer = null; }
-        stopQrPoll();
-        history.replaceState(null, '', location.pathname);
-    }
-
-    btnShowQr.addEventListener('click', () => {
-        hapticSelection();
-        if (qrModal.open) {
-            closeQrModal();
-            return;
-        }
-        loadCheckinQr();
-    });
-
-    document.getElementById('qr-modal-close')?.addEventListener('click', () => {
-        hapticSelection();
-        closeQrModal();
-    });
-
-    qrModal.addEventListener('close', () => {
-        btnShowQr.classList.remove('is-active');
-        document.getElementById('nav-qr-btn')?.classList.remove('active');
-        if (qrTimer) { clearInterval(qrTimer); qrTimer = null; }
-        stopQrPoll();
-        history.replaceState(null, '', location.pathname);
-    });
-
-    // Intercept nav QR button — show QR without page reload
-    document.getElementById('nav-qr-btn')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        hapticSelection();
-        history.replaceState(null, '', '#qr');
-        btnShowQr.click();
-    });
-
     loadState().then(() => {
-        if (location.hash === '#qr') {
-            btnShowQr.click();
-        }
     }).catch(() => {
         hapticError();
         tgAlert('Failed to initialize Mini App.');
@@ -540,14 +372,5 @@
 </script>
 <x-telegram.bottom-nav active="home" />
 
-<dialog id="qr-modal" class="qr-modal">
-    <button type="button" id="qr-modal-close" class="qr-modal-close" aria-label="Close">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
-    </button>
-    <div class="qr-modal-title">Check-in QR</div>
-    <div id="qr-svg" class="qr-svg-wrap"></div>
-    <div id="qr-expire-text" class="qr-expire-text">Expires in: -</div>
-    <div id="qr-status" class="qr-status"></div>
-</dialog>
 </body>
 </html>

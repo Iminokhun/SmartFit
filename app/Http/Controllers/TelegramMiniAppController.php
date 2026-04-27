@@ -119,6 +119,11 @@ class TelegramMiniAppController extends Controller
         ]);
     }
 
+    public function qrPage(): \Illuminate\View\View
+    {
+        return view('telegram.qr-screen');
+    }
+
     public function mySubscriptionsPage(): \Illuminate\View\View
     {
         return view('telegram.mini-app-my-subscriptions');
@@ -228,9 +233,31 @@ class TelegramMiniAppController extends Controller
         return response()->json([
             'ok' => true,
             'message' => 'Check-in QR generated.',
+            'token' => $qrData['token'],
             'expires_at' => $qrData['expires_at'],
             'qr_svg' => $qrData['qr_svg'],
             'qr_payload' => $qrData['payload'],
+        ]);
+    }
+
+    public function checkinQrStatus(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'init_data' => ['required', 'string'],
+            'token'     => ['required', 'string'],
+        ]);
+
+        $tokenRow = \App\Models\CheckinToken::query()
+            ->where('token_hash', hash('sha256', $data['token']))
+            ->first();
+
+        if (! $tokenRow) {
+            return response()->json(['ok' => false, 'message' => 'Token not found.'], 404);
+        }
+
+        return response()->json([
+            'ok'   => true,
+            'used' => $tokenRow->used_at !== null,
         ]);
     }
 

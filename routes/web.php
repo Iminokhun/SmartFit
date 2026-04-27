@@ -54,6 +54,13 @@ Route::middleware(['force.telegram.https'])->prefix('telegram')->group(function 
         ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
         ->name('telegram.mini-app.checkin-qr');
 
+    Route::post('/mini-app/checkin-qr/status', [TelegramMiniAppController::class, 'checkinQrStatus'])
+        ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+        ->name('telegram.mini-app.checkin-qr.status');
+
+    Route::get('/mini-app/qr', [TelegramMiniAppController::class, 'qrPage'])
+        ->name('telegram.mini-app.qr');
+
     Route::get('/mini-app/my-subscriptions', [TelegramMiniAppController::class, 'mySubscriptionsPage'])
         ->name('telegram.mini-app.my-subscriptions');
 

@@ -8,7 +8,7 @@
         <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
         <span>My Pass</span>
     </a>
-    <a href="{{ route('telegram.mini-app.show') }}#qr" class="nav-item {{ $active === 'qr' ? 'active' : '' }}" id="nav-qr-btn">
+    <a href="{{ route('telegram.mini-app.qr') }}" class="nav-item {{ $active === 'qr' ? 'active' : '' }}" id="nav-qr-btn">
         <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="5" y="5" width="3" height="3"/><rect x="16" y="5" width="3" height="3"/><rect x="5" y="16" width="3" height="3"/><path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3"/></svg>
         <span>My QR</span>
     </a>
