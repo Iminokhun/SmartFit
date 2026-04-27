@@ -176,19 +176,6 @@
                 </x-filament::section>
             </div>
 
-            <x-filament::section heading="Peak Hours" class="analytics-panel analytics-chart">
-                <div class="analytics-note mb-3 text-xs text-gray-500">
-                    Check-in distribution by hour and day of week. Peak hour is highlighted in red.
-                </div>
-                <div class="analytics-chart-wrap">
-                    @livewire(\App\Filament\Widgets\Analytics\PeakHoursHeatmapChart::class, [
-                        'from'       => $from,
-                        'until'      => $until,
-                        'activityId' => $activityId,
-                        'hallId'     => $hallId,
-                    ], key('peak-heatmap-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . implode(',', (array) ($activityId ?? [])) . '-' . implode(',', (array) ($hallId ?? []))))
-                </div>
-            </x-filament::section>
         @else
             <x-filament::section heading="No Data" class="analytics-panel analytics-chart">
                 <div class="analytics-empty">

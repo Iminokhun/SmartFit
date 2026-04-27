@@ -26,12 +26,21 @@ class AttendanceVisitsTrendChart extends ApexChartWidget
     {
         [$from, $until] = $this->resolveDateRange();
 
+        $days = (int) $from->diffInDays($until) + 1;
+        $granularity = $days <= 31 ? 'day' : ($days <= 90 ? 'week' : 'month');
+
+        $dateTrunc = match ($granularity) {
+            'week'  => "DATE_TRUNC('week',  COALESCE(schedule_occurrences.date, DATE(visits.visited_at)))",
+            'month' => "DATE_TRUNC('month', COALESCE(schedule_occurrences.date, DATE(visits.visited_at)))",
+            default => "DATE(COALESCE(schedule_occurrences.date, DATE(visits.visited_at)))",
+        };
+
         $rows = $this->baseVisitsQuery($from, $until)
-            ->selectRaw("DATE(COALESCE(schedule_occurrences.date, DATE(visits.visited_at))) as date")
-            ->selectRaw("SUM(CASE WHEN visits.status = 'visited' THEN 1 ELSE 0 END) as visited_count")
-            ->selectRaw("SUM(CASE WHEN visits.status = 'missed' THEN 1 ELSE 0 END) as missed_count")
+            ->selectRaw("{$dateTrunc}::date as date")
+            ->selectRaw("SUM(CASE WHEN visits.status = 'visited'   THEN 1 ELSE 0 END) as visited_count")
+            ->selectRaw("SUM(CASE WHEN visits.status = 'missed'    THEN 1 ELSE 0 END) as missed_count")
             ->selectRaw("SUM(CASE WHEN visits.status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_count")
-            ->groupBy(DB::raw("DATE(COALESCE(schedule_occurrences.date, DATE(visits.visited_at)))"))
+            ->groupBy(DB::raw("{$dateTrunc}"))
             ->orderBy('date')
             ->get()
             ->keyBy('date');
@@ -42,22 +51,37 @@ class AttendanceVisitsTrendChart extends ApexChartWidget
         $cancelledSeries = [];
 
         $cursor = $from->copy();
+        if ($granularity === 'week') {
+            $cursor->startOfWeek();
+        } elseif ($granularity === 'month') {
+            $cursor->startOfMonth();
+        }
+
         while ($cursor->lte($until)) {
             $date = $cursor->toDateString();
-            $labels[] = $cursor->format('M d');
-            $visitedSeries[] = (int) ($rows[$date]->visited_count ?? 0);
-            $missedSeries[] = (int) ($rows[$date]->missed_count ?? 0);
+            $labels[] = match ($granularity) {
+                'week'  => 'W' . $cursor->weekOfYear . ' ' . $cursor->format('M d'),
+                'month' => $cursor->format('M Y'),
+                default => $cursor->format('M d'),
+            };
+            $visitedSeries[]   = (int) ($rows[$date]->visited_count   ?? 0);
+            $missedSeries[]    = (int) ($rows[$date]->missed_count    ?? 0);
             $cancelledSeries[] = (int) ($rows[$date]->cancelled_count ?? 0);
-            $cursor->addDay();
+
+            match ($granularity) {
+                'week'  => $cursor->addWeek(),
+                'month' => $cursor->addMonth(),
+                default => $cursor->addDay(),
+            };
         }
 
         return [
             'chart' => [
-                'type' => 'bar',
-                'height' => 320,
-                'toolbar' => ['show' => false],
+                'type'       => 'bar',
+                'height'     => 320,
+                'toolbar'    => ['show' => false],
                 'fontFamily' => 'Manrope, Segoe UI, Helvetica Neue, Arial, sans-serif',
-                'foreColor' => '#64748b',
+                'foreColor'  => '#64748b',
             ],
             'series' => [
                 ['name' => 'Visited', 'data' => $visitedSeries],
@@ -67,8 +91,8 @@ class AttendanceVisitsTrendChart extends ApexChartWidget
             'colors' => ['#15803d', '#b45309', '#dc2626'],
             'plotOptions' => [
                 'bar' => [
-                    'horizontal' => false,
-                    'columnWidth' => '58%',
+                    'horizontal'  => false,
+                    'columnWidth' => $granularity === 'day' ? '58%' : '40%',
                     'borderRadius' => 4,
                 ],
             ],

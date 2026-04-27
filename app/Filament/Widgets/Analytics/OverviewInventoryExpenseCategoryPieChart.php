@@ -89,7 +89,15 @@ class OverviewInventoryExpenseCategoryPieChart extends ApexChartWidget
                         fontWeight: 600,
                         formatter: function(val) { return Number(val).toLocaleString('en-US'); }
                     },
-                    total: { show: true, showAlways: true, label: 'TOTAL' }
+                    total: {
+                        show: true,
+                        showAlways: true,
+                        label: 'TOTAL',
+                        formatter: function(w) {
+                            var sum = w.globals.seriesTotals.reduce(function(a, b) { return a + b; }, 0);
+                            return Math.round(sum).toLocaleString('en-US');
+                        }
+                    }
                 }
             }
         }

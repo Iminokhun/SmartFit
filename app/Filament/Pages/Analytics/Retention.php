@@ -205,8 +205,9 @@ class Retention extends Page implements HasForms
 
     private function resolveDateRange(): array
     {
-        $from  = !empty($this->data['from'])  ? Carbon::parse($this->data['from'])  : Carbon::today();
-        $until = !empty($this->data['until']) ? Carbon::parse($this->data['until']) : Carbon::today();
+        $today = Carbon::today();
+        $from  = !empty($this->data['from'])  ? Carbon::parse($this->data['from'])  : $today->copy()->subMonths(5)->startOfMonth();
+        $until = !empty($this->data['until']) ? Carbon::parse($this->data['until']) : $today->copy()->endOfMonth();
 
         if ($from->gt($until)) {
             [$from, $until] = [$until, $from];

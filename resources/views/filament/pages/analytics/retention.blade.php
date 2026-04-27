@@ -65,28 +65,6 @@
             </div>
         </x-filament::section>
 
-        <x-filament::section heading="Subscription Lifetime at Churn" class="analytics-panel analytics-chart">
-            <div class="analytics-note mb-3 text-xs text-gray-500">
-                How long churned clients stayed before leaving. Red = early churn, green = long-term clients lost.
-            </div>
-            @if ($hasData)
-                <div class="analytics-chart-wrap">
-                    @livewire('App\\Filament\\Widgets\\Analytics\\RetentionLtvDistributionChart', [
-                        'from'        => $from,
-                        'until'       => $until,
-                        'activityIds' => $activityIds,
-                    ], key('apex-ltv-dist-' . ($from ?? 'na') . '-' . ($until ?? 'na') . '-' . implode(',', $activityIds ?? [])))
-                </div>
-            @else
-                <div class="analytics-empty">
-                    <div class="analytics-empty-title">No data for selected filters</div>
-                    <div class="analytics-empty-subtitle">No subscriptions expired in this period. Try a broader date range.</div>
-                    <x-filament::button size="sm" color="gray" wire:click="resetFilters">
-                        Reset filters
-                    </x-filament::button>
-                </div>
-            @endif
-        </x-filament::section>
 
     </div>
 </x-filament::page>
