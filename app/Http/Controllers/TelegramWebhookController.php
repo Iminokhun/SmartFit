@@ -5,15 +5,19 @@ namespace App\Http\Controllers;
 use App\DTO\Telegram\TelegramPreCheckoutData;
 use App\DTO\Telegram\TelegramSuccessfulPaymentData;
 use App\DTO\Telegram\TelegramUpdateData;
-use App\Services\Telegram\TelegramWebhookService;
+use App\Services\Telegram\Webhook\TelegramPaymentService;
+use App\Services\Telegram\Webhook\TelegramWebhookRouter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class TelegramWebhookController extends Controller
 {
-    public function __invoke(Request $request, TelegramWebhookService $webhookService): JsonResponse
-    {
+    public function __invoke(
+        Request $request,
+        TelegramWebhookRouter $router,
+        TelegramPaymentService $paymentService,
+    ): JsonResponse {
         $secret = (string) config('services.telegram.webhook_secret');
 
         if ($secret !== '') {
@@ -37,7 +41,7 @@ class TelegramWebhookController extends Controller
                 'currency' => $preCheckout->currency,
             ]);
 
-            $webhookService->handlePreCheckoutQuery($preCheckout);
+            $paymentService->handlePreCheckoutQuery($preCheckout);
 
             return response()->json(['ok' => true]);
         }
@@ -51,7 +55,7 @@ class TelegramWebhookController extends Controller
                 'currency' => $successfulPayment->currency,
             ]);
 
-            $webhookService->handleSuccessfulPayment($successfulPayment);
+            $paymentService->handleSuccessfulPayment($successfulPayment);
 
             return response()->json(['ok' => true]);
         }
@@ -67,7 +71,7 @@ class TelegramWebhookController extends Controller
             'text' => $update->text,
         ]);
 
-        $webhookService->handleUpdate($update);
+        $router->handleUpdate($update);
 
         return response()->json(['ok' => true]);
     }

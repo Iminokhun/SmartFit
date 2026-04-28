@@ -17,7 +17,6 @@ Route::get('/', function () {
 })->name('home');
 
 Route::view('/staff', 'auth.staff-login')->name('staff.login');
-Route::view('/staff/login', 'auth.staff-login');
 
 Route::post('/telegram/webhook', TelegramWebhookController::class)
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])

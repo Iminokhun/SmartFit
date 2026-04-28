@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\AiChatService;
 use App\Services\Checkin\QrCheckinService;
 use App\Services\Telegram\TelegramMiniAppService;
-use App\Services\Telegram\TelegramWebhookService;
+use App\Services\Telegram\Webhook\TelegramPaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -58,7 +58,7 @@ class TelegramMiniAppController extends Controller
     public function purchaseInvoice(
         Request $request,
         TelegramMiniAppService $miniAppService,
-        TelegramWebhookService $webhookService
+        TelegramPaymentService $paymentService,
     ): JsonResponse {
         $data = $request->validate([
             'init_data' => ['required', 'string'],
@@ -80,7 +80,7 @@ class TelegramMiniAppController extends Controller
             'subscription_id' => (int) $data['subscription_id'],
         ]);
 
-        $result = $webhookService->makeInvoiceForLinkedUser(
+        $result = $paymentService->makeInvoiceForLinkedUser(
             $telegramUserId,
             (int) $data['subscription_id'],
         );
