@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 150" width="100%" height="100%">
+  <text x="200" y="80" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="52" font-weight="600" letter-spacing="4">
+    <tspan fill="#1e293b">SMART</tspan><tspan fill="#f24e4e">FIT</tspan>
+  </text>
+  
+  <text x="200" y="120" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="18" font-weight="500" fill="#7a8494" letter-spacing="8">
+    GYM ERP
+  </text>
+</svg>

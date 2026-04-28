@@ -31,6 +31,8 @@ class TrainerPanelProvider extends PanelProvider
             ->path('trainer')
             ->login()
             ->viteTheme('resources/css/filament/admin/theme.css')
+            ->brandLogo(asset('images/logo.svg'))
+            ->brandLogoHeight('3.5rem')
             ->colors([
                 'primary' => Color::Blue,
             ])

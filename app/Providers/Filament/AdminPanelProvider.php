@@ -32,6 +32,8 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->profile(null)
             ->viteTheme('resources/css/filament/admin/theme.css')
+            ->brandLogo(asset('images/logo.svg'))
+            ->brandLogoHeight('3.5rem')
             ->colors([
                 'primary' => Color::Amber,
             ])

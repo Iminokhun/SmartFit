@@ -1414,3 +1414,111 @@
     line-height: 1.75rem;
     font-weight: 700;
 }
+
+/* Trainer Personal — Top row: card + shifts side by side */
+.tp-top-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+.tp-top-row__card,
+.tp-top-row__shifts {
+    height: 100%;
+}
+@media (max-width: 768px) {
+    .tp-top-row { grid-template-columns: 1fr; }
+}
+
+/* Trainer Personal — Stats Bar */
+.tp-stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+.tp-stat-card {
+    background: var(--fi-color-gray-50, #f9fafb);
+    border: 1px solid #e2e8f0;
+    border-radius: .75rem;
+    padding: 1rem 1.25rem;
+}
+.tp-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1;
+}
+.tp-stat-suffix {
+    font-size: .875rem;
+    font-weight: 500;
+    color: #64748b;
+    margin-left: .25rem;
+}
+.tp-stat-label {
+    font-size: .75rem;
+    color: #64748b;
+    margin-top: .3rem;
+}
+@media (max-width: 640px) {
+    .tp-stats-bar { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Trainer Personal — Week Schedule today highlight */
+.tp-row--today td {
+    background: #fef9c3;
+    font-weight: 600;
+}
+
+/* Trainer Personal — Shifts */
+.tp-shifts-list {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+}
+.tp-shift-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--fi-color-gray-50, #f9fafb);
+    border: 1px solid #e2e8f0;
+    border-radius: .625rem;
+    padding: .6rem .875rem;
+}
+.tp-shift-days {
+    display: flex;
+    gap: .3rem;
+}
+.tp-shift-day {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    font-size: .6rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0;
+}
+.tp-shift-day--on {
+    background: #f59e0b;
+    color: #fff;
+}
+.tp-shift-day--off {
+    background: #e2e8f0;
+    color: #94a3b8;
+}
+.tp-shift-time {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .875rem;
+    font-weight: 600;
+    color: #334155;
+}
+.tp-shift-clock {
+    width: 1rem;
+    height: 1rem;
+    color: #94a3b8;
+    flex-shrink: 0;
+}

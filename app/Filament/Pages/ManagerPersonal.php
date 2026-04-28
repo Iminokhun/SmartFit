@@ -10,7 +10,7 @@ class ManagerPersonal extends Page
     protected static string|null|\BackedEnum $navigationIcon = Heroicon::OutlinedUserCircle;
     protected static string|null|\UnitEnum $navigationGroup = 'Account';
     protected static ?int $navigationSort = 1;
-    protected static ?string $navigationLabel = 'Personal';
+    protected static ?string $navigationLabel = 'Profile';
     protected static ?string $title = 'Personal Profile';
     protected static ?string $slug = 'personal';
 
@@ -43,8 +43,37 @@ class ManagerPersonal extends Page
                 ? ucfirst(str_replace('_', ' ', (string) $staff->salary_type))
                 : '-',
             'amount' => $staff?->salary !== null
-                ? '$' . number_format((float) $staff->salary, 2, '.', ',')
+                ? number_format((float) $staff->salary, 2, '.', ',')
                 : '-',
+        ];
+    }
+
+    public function getStatsProperty(): array
+    {
+        $staff = auth()->user()?->staff;
+
+        $experience = $staff?->experience_years ?? 0;
+
+        $status = $staff?->status ?? 'active';
+        $statusLabel = match ($status) {
+            'active'   => 'Active',
+            'vacation' => 'Vacation',
+            default    => 'Inactive',
+        };
+        $statusColor = match ($status) {
+            'active'   => '#16a34a',
+            'vacation' => '#d97706',
+            default    => '#dc2626',
+        };
+
+        $activeStaff = \App\Models\Staff::where('status', 'active')->count();
+
+        $shiftsCount = $staff ? $staff->shifts()->count() : 0;
+
+        return [
+            ['label' => 'Experience', 'value' => $experience,  'suffix' => 'yrs', 'color' => null],
+            ['label' => 'Status',     'value' => $statusLabel, 'suffix' => '',    'color' => $statusColor],
+            ['label' => 'Shifts',     'value' => $shiftsCount, 'suffix' => '',    'color' => null],
         ];
     }
 
@@ -56,15 +85,16 @@ class ManagerPersonal extends Page
             return [];
         }
 
+        $allDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
         return $staff->shifts()
             ->orderBy('start_time')
             ->get()
             ->map(fn ($shift) => [
-                'days' => collect((array) $shift->days_of_week)
-                    ->map(fn ($day) => ucfirst((string) $day))
-                    ->implode(', ') ?: '-',
-                'from' => \Carbon\Carbon::parse($shift->start_time)->format('H:i'),
-                'to' => \Carbon\Carbon::parse($shift->end_time)->format('H:i'),
+                'days'     => array_map('strtolower', (array) $shift->days_of_week),
+                'all_days' => $allDays,
+                'from'     => \Carbon\Carbon::parse($shift->start_time)->format('H:i'),
+                'to'       => \Carbon\Carbon::parse($shift->end_time)->format('H:i'),
             ])
             ->all();
     }

@@ -47,6 +47,8 @@ class ManagerPanelProvider extends PanelProvider
             ->path('manager')
             ->login()
             ->viteTheme('resources/css/filament/admin/theme.css')
+            ->brandLogo(asset('images/logo.svg'))
+            ->brandLogoHeight('3.5rem')
             ->colors([
                 'primary' => Color::Amber,
             ])
